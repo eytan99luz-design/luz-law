@@ -14,23 +14,32 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import logoLight from "@/assets/logo-light.png";
 
-// Working hours: Sunday-Thursday 9:00-17:00, slots every 30 min
-const WORKING_DAYS = [0, 1, 2, 3, 4]; // Sun-Thu
-const START_HOUR = 9;
-const END_HOUR = 17;
-const SLOT_DURATION = 30; // minutes
+type DayAvailability = { enabled: boolean; start: string; end: string };
+type AvailabilityConfig = Record<number, DayAvailability>;
 
-function generateTimeSlots(): string[] {
+const DEFAULT_AVAILABILITY: AvailabilityConfig = {
+  0: { enabled: true, start: "09:00", end: "17:00" },
+  1: { enabled: true, start: "09:00", end: "17:00" },
+  2: { enabled: true, start: "09:00", end: "17:00" },
+  3: { enabled: true, start: "09:00", end: "17:00" },
+  4: { enabled: true, start: "09:00", end: "17:00" },
+  5: { enabled: false, start: "09:00", end: "13:00" },
+  6: { enabled: false, start: "09:00", end: "13:00" },
+};
+
+function generateTimeSlots(startTime: string, endTime: string, duration: number): string[] {
   const slots: string[] = [];
-  for (let h = START_HOUR; h < END_HOUR; h++) {
-    for (let m = 0; m < 60; m += SLOT_DURATION) {
-      slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
-    }
+  const [sh, sm] = startTime.split(":").map(Number);
+  const [eh, em] = endTime.split(":").map(Number);
+  const startMin = sh * 60 + sm;
+  const endMin = eh * 60 + em;
+  for (let m = startMin; m < endMin; m += duration) {
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    slots.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
   }
   return slots;
 }
-
-const ALL_SLOTS = generateTimeSlots();
 
 const BookAppointment: React.FC = () => {
   const { toast } = useToast();
@@ -45,6 +54,27 @@ const BookAppointment: React.FC = () => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", description: "" });
+  const [availability, setAvailability] = useState<AvailabilityConfig>(DEFAULT_AVAILABILITY);
+  const [slotDuration, setSlotDuration] = useState(30);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+
+  // Load availability config
+  useEffect(() => {
+    const loadConfig = async () => {
+      const [availRes, slotRes] = await Promise.all([
+        supabase.from("admin_settings" as any).select("value").eq("key", "availability").single(),
+        supabase.from("admin_settings" as any).select("value").eq("key", "slot_duration").single(),
+      ]);
+      if (availRes.data) {
+        try { setAvailability(JSON.parse((availRes.data as any).value)); } catch {}
+      }
+      if (slotRes.data) {
+        try { setSlotDuration(Number((slotRes.data as any).value) || 30); } catch {}
+      }
+      setLoadingConfig(false);
+    };
+    loadConfig();
+  }, []);
 
   // Load booked slots for selected date
   useEffect(() => {
