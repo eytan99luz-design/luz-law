@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, FileText, Link2, Copy, Eye, Upload, MessageCircle, Send } from "lucide-react";
+import { Plus, Trash2, FileText, Link2, Copy, Eye, Upload, MessageCircle, Send, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,6 +14,20 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type Client = {
+  id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+};
 
 type Document = {
   id: string;
@@ -39,6 +53,7 @@ const DocumentsTab: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -48,8 +63,24 @@ const DocumentsTab: React.FC = () => {
     token: string;
     docTitle: string;
   }>({ open: false, token: "", docTitle: "" });
+  const [emailDialog, setEmailDialog] = useState<{
+    open: boolean;
+    token: string;
+    docTitle: string;
+  }>({ open: false, token: "", docTitle: "" });
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+
+  const loadClients = async () => {
+    const { data } = await supabase
+      .from("clients")
+      .select("id, full_name, email, phone")
+      .eq("status", "active")
+      .order("full_name");
+    if (data) setClients(data);
+  };
 
   const loadDocuments = async () => {
     setLoading(true);
@@ -59,7 +90,6 @@ const DocumentsTab: React.FC = () => {
       .order("created_at", { ascending: false });
 
     if (docs) {
-      // Load submissions for each document
       const docsWithSubs = await Promise.all(
         docs.map(async (doc: any) => {
           const { data: subs } = await supabase
@@ -77,6 +107,7 @@ const DocumentsTab: React.FC = () => {
 
   useEffect(() => {
     loadDocuments();
+    loadClients();
   }, []);
 
   const handleUploadPDF = async () => {
@@ -88,7 +119,7 @@ const DocumentsTab: React.FC = () => {
     setUploading(true);
     const fileExt = selectedFile.name.split('.').pop() || 'pdf';
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("documents")
       .upload(fileName, selectedFile, { contentType: "application/pdf" });
 
@@ -123,6 +154,16 @@ const DocumentsTab: React.FC = () => {
     loadDocuments();
   };
 
+  const deleteSubmission = async (id: string) => {
+    const { error } = await supabase.from("document_submissions").delete().eq("id", id);
+    if (error) {
+      toast({ title: "שגיאה במחיקת הקישור", variant: "destructive" });
+    } else {
+      toast({ title: "הקישור נמחק" });
+      loadDocuments();
+    }
+  };
+
   const createSigningLink = async (docId: string) => {
     const { data, error } = await supabase
       .from("document_submissions")
@@ -152,6 +193,16 @@ const DocumentsTab: React.FC = () => {
     }
   };
 
+  const fillClientDetails = (clientId: string) => {
+    setSelectedClientId(clientId);
+    const client = clients.find((c) => c.id === clientId);
+    if (client) {
+      setClientName(client.full_name);
+      setClientPhone(client.phone || "");
+      setClientEmail(client.email || "");
+    }
+  };
+
   const handleSendWhatsApp = () => {
     if (!clientPhone.trim()) {
       toast({ title: "נא להזין מספר טלפון", variant: "destructive" });
@@ -160,15 +211,63 @@ const DocumentsTab: React.FC = () => {
     const link = `${window.location.origin}/sign/${whatsappDialog.token}`;
     const name = clientName.trim() || "לקוח/ה יקר/ה";
     const message = `היי ${name}, מצורף ${whatsappDialog.docTitle} לחתימה:\n${link}\n\nבברכה,\nעו"ד איתן לוז`;
-    // Format phone: remove leading 0, add 972
     let phone = clientPhone.trim().replace(/[^0-9]/g, "");
     if (phone.startsWith("0")) phone = "972" + phone.slice(1);
     const waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
     window.open(waUrl, "_blank", "noopener,noreferrer");
     setWhatsappDialog({ open: false, token: "", docTitle: "" });
+    resetClientFields();
+  };
+
+  const handleSendEmail = () => {
+    if (!clientEmail.trim()) {
+      toast({ title: "נא להזין כתובת מייל", variant: "destructive" });
+      return;
+    }
+    const link = `${window.location.origin}/sign/${emailDialog.token}`;
+    const name = clientName.trim() || "לקוח/ה יקר/ה";
+    const subject = `${emailDialog.docTitle} - מסמך לחתימה`;
+    const body = `היי ${name},\n\nמצורף ${emailDialog.docTitle} לחתימה:\n${link}\n\nבברכה,\nעו"ד איתן לוז`;
+    const mailtoUrl = `mailto:${clientEmail.trim()}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoUrl);
+    setEmailDialog({ open: false, token: "", docTitle: "" });
+    resetClientFields();
+  };
+
+  const resetClientFields = () => {
     setClientName("");
     setClientPhone("");
+    setClientEmail("");
+    setSelectedClientId("");
   };
+
+  const openWhatsAppDialog = (token: string, docTitle: string) => {
+    resetClientFields();
+    setWhatsappDialog({ open: true, token, docTitle });
+  };
+
+  const openEmailDialog = (token: string, docTitle: string) => {
+    resetClientFields();
+    setEmailDialog({ open: true, token, docTitle });
+  };
+
+  const ClientSelector = () => (
+    <div>
+      <Label>בחר לקוח מהרשימה</Label>
+      <Select value={selectedClientId} onValueChange={fillClientDetails}>
+        <SelectTrigger>
+          <SelectValue placeholder="בחר לקוח..." />
+        </SelectTrigger>
+        <SelectContent>
+          {clients.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
+              {c.full_name} {c.phone ? `(${c.phone})` : ""}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
   if (loading) return <p className="text-muted-foreground">טוען מסמכים...</p>;
 
@@ -279,18 +378,24 @@ const DocumentsTab: React.FC = () => {
                             <Copy className="h-3 w-3" />
                           </Button>
                           {sub.status === "pending" && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-green-600"
-                              onClick={() => {
-                                setWhatsappDialog({ open: true, token: sub.token, docTitle: doc.title });
-                                setClientName("");
-                                setClientPhone("");
-                              }}
-                            >
-                              <MessageCircle className="h-3 w-3" />
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-green-600"
+                                onClick={() => openWhatsAppDialog(sub.token, doc.title)}
+                              >
+                                <MessageCircle className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-blue-600"
+                                onClick={() => openEmailDialog(sub.token, doc.title)}
+                              >
+                                <Mail className="h-3 w-3" />
+                              </Button>
+                            </>
                           )}
                           {sub.signed_pdf_url && (
                             <Button
@@ -318,6 +423,14 @@ const DocumentsTab: React.FC = () => {
                               PDF חתום
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive"
+                            onClick={() => deleteSubmission(sub.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -336,6 +449,7 @@ const DocumentsTab: React.FC = () => {
             <DialogTitle>שליחת קישור חתימה בוואטסאפ</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <ClientSelector />
             <div>
               <Label>שם הלקוח</Label>
               <Input
@@ -364,6 +478,48 @@ const DocumentsTab: React.FC = () => {
             <Button onClick={handleSendWhatsApp} className="bg-green-600 hover:bg-green-700 text-white gap-2">
               <Send className="h-4 w-4" />
               שלח בוואטסאפ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Dialog */}
+      <Dialog open={emailDialog.open} onOpenChange={(open) => setEmailDialog((prev) => ({ ...prev, open }))}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>שליחת קישור חתימה במייל</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <ClientSelector />
+            <div>
+              <Label>שם הלקוח</Label>
+              <Input
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="לדוגמה: ישראל ישראלי"
+              />
+            </div>
+            <div>
+              <Label>כתובת מייל <span className="text-destructive">*</span></Label>
+              <Input
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+                placeholder="example@email.com"
+                dir="ltr"
+                type="email"
+              />
+            </div>
+            <div className="bg-muted/50 rounded p-3 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">תצוגה מקדימה:</p>
+              <p className="whitespace-pre-line">
+                {`היי ${clientName.trim() || "לקוח/ה יקר/ה"},\n\nמצורף ${emailDialog.docTitle} לחתימה:\n[קישור לחתימה]\n\nבברכה,\nעו"ד איתן לוז`}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSendEmail} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+              <Mail className="h-4 w-4" />
+              שלח במייל
             </Button>
           </DialogFooter>
         </DialogContent>
