@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Save, Calendar, Clock, MapPin, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Trash2, Save, Calendar, Clock, MapPin, CheckCircle, XCircle, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -38,6 +39,26 @@ type Appointment = {
   client_name?: string;
 };
 
+const DAY_NAMES = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+type DayAvailability = {
+  enabled: boolean;
+  start: string;
+  end: string;
+};
+
+type AvailabilityConfig = Record<number, DayAvailability>;
+
+const DEFAULT_AVAILABILITY: AvailabilityConfig = {
+  0: { enabled: true, start: "09:00", end: "17:00" },
+  1: { enabled: true, start: "09:00", end: "17:00" },
+  2: { enabled: true, start: "09:00", end: "17:00" },
+  3: { enabled: true, start: "09:00", end: "17:00" },
+  4: { enabled: true, start: "09:00", end: "17:00" },
+  5: { enabled: false, start: "09:00", end: "13:00" },
+  6: { enabled: false, start: "09:00", end: "13:00" },
+};
+
 const AppointmentsTab: React.FC = () => {
   const { toast } = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -46,13 +67,26 @@ const AppointmentsTab: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Appointment> | null>(null);
   const [viewMode, setViewMode] = useState<"upcoming" | "past" | "all">("upcoming");
+  const [availability, setAvailability] = useState<AvailabilityConfig>(DEFAULT_AVAILABILITY);
+  const [slotDuration, setSlotDuration] = useState(30);
+  const [savingAvail, setSavingAvail] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
-    const [appts, cls] = await Promise.all([
+    const [appts, cls, availSetting, slotSetting] = await Promise.all([
       supabase.from("appointments").select("*").order("appointment_date", { ascending: true }),
       supabase.from("clients").select("id, full_name").order("full_name"),
+      supabase.from("admin_settings" as any).select("value").eq("key", "availability").single(),
+      supabase.from("admin_settings" as any).select("value").eq("key", "slot_duration").single(),
     ]);
+
+    if (availSetting.data) {
+      try { setAvailability(JSON.parse((availSetting.data as any).value)); } catch {}
+    }
+    if (slotSetting.data) {
+      try { setSlotDuration(Number((slotSetting.data as any).value) || 30); } catch {}
+    }
 
     const clientMap = new Map<string, string>();
     if (cls.data) {
@@ -134,23 +168,125 @@ const AppointmentsTab: React.FC = () => {
     }
   };
 
+  const saveAvailability = async () => {
+    setSavingAvail(true);
+    try {
+      const upsert = async (key: string, value: string) => {
+        const { data: existing } = await supabase
+          .from("admin_settings" as any)
+          .select("id")
+          .eq("key", key)
+          .single();
+        if (existing) {
+          await supabase.from("admin_settings" as any).update({ value, updated_at: new Date().toISOString() } as any).eq("key", key);
+        } else {
+          await supabase.from("admin_settings" as any).insert({ key, value } as any);
+        }
+      };
+      await Promise.all([
+        upsert("availability", JSON.stringify(availability)),
+        upsert("slot_duration", String(slotDuration)),
+      ]);
+      toast({ title: "שעות הפעילות נשמרו!" });
+    } catch (err: any) {
+      toast({ title: "שגיאה בשמירה", variant: "destructive" });
+    } finally {
+      setSavingAvail(false);
+    }
+  };
+
+  const updateDay = (day: number, updates: Partial<DayAvailability>) => {
+    setAvailability((prev) => ({ ...prev, [day]: { ...prev[day], ...updates } }));
+  };
+
   if (loading) return <p className="text-muted-foreground">טוען פגישות...</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-2xl font-bold text-foreground">יומן פגישות</h2>
-        <Button
-          onClick={() => {
-            setEditing({ status: "scheduled", appointment_date: today, start_time: "09:00", end_time: "10:00" });
-            setDialogOpen(true);
-          }}
-          className="bg-gradient-gold text-primary-foreground"
-        >
-          <Plus className="h-4 w-4 ml-1" />
-          פגישה חדשה
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowSettings(!showSettings)}
+            className="border-primary/30 text-primary"
+          >
+            <Settings className="h-4 w-4 ml-1" />
+            שעות פעילות
+          </Button>
+          <Button
+            onClick={() => {
+              setEditing({ status: "scheduled", appointment_date: today, start_time: "09:00", end_time: "10:00" });
+              setDialogOpen(true);
+            }}
+            className="bg-gradient-gold text-primary-foreground"
+          >
+            <Plus className="h-4 w-4 ml-1" />
+            פגישה חדשה
+          </Button>
+        </div>
       </div>
+
+      {/* Availability Settings */}
+      {showSettings && (
+        <div className="bg-card border border-border rounded-lg p-4 space-y-4">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            הגדרת שעות פעילות
+          </h3>
+          <p className="text-sm text-muted-foreground">הגדר באילו ימים ושעות אתה זמין לפגישות</p>
+          <div className="space-y-3">
+            {[0, 1, 2, 3, 4, 5, 6].map((day) => (
+              <div key={day} className="flex items-center gap-3 flex-wrap">
+                <div className="w-16">
+                  <Switch
+                    checked={availability[day]?.enabled ?? false}
+                    onCheckedChange={(v) => updateDay(day, { enabled: v })}
+                  />
+                </div>
+                <span className={`w-16 text-sm font-medium ${availability[day]?.enabled ? "text-foreground" : "text-muted-foreground"}`}>
+                  {DAY_NAMES[day]}
+                </span>
+                {availability[day]?.enabled && (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={availability[day]?.start || "09:00"}
+                      onChange={(e) => updateDay(day, { start: e.target.value })}
+                      className="w-28"
+                      dir="ltr"
+                    />
+                    <span className="text-muted-foreground">עד</span>
+                    <Input
+                      type="time"
+                      value={availability[day]?.end || "17:00"}
+                      onChange={(e) => updateDay(day, { end: e.target.value })}
+                      className="w-28"
+                      dir="ltr"
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <Label>משך פגישה (דקות)</Label>
+            <Input
+              type="number"
+              value={slotDuration}
+              onChange={(e) => setSlotDuration(Number(e.target.value) || 30)}
+              className="w-20"
+              min={15}
+              max={120}
+              step={15}
+            />
+          </div>
+          <Button onClick={saveAvailability} disabled={savingAvail} className="bg-gradient-gold text-primary-foreground">
+            <Save className="h-4 w-4 ml-1" />
+            {savingAvail ? "שומר..." : "שמור שעות פעילות"}
+          </Button>
+        </div>
+      )}
 
       {/* View Toggle */}
       <div className="flex gap-2">
