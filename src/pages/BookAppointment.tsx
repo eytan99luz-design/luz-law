@@ -56,6 +56,7 @@ const BookAppointment: React.FC = () => {
   const [form, setForm] = useState({ name: "", phone: "", email: "", description: "" });
   const [availability, setAvailability] = useState<AvailabilityConfig>(DEFAULT_AVAILABILITY);
   const [slotDuration, setSlotDuration] = useState(30);
+  const [adminPhone, setAdminPhone] = useState("");
   const [loadingConfig, setLoadingConfig] = useState(true);
 
   // Load availability config
