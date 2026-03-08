@@ -2,12 +2,20 @@ import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Globe, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import logo from "@/assets/logo.jpg";
 
 const Header: React.FC = () => {
   const { t, language, toggleLanguage } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navItems = [
     { label: t.nav.home, href: "#hero" },
@@ -24,23 +32,33 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
-      <div className="container mx-auto px-4 flex items-center justify-between h-16">
+    <motion.header
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? "bg-background/95 backdrop-blur-md border-b border-border/50 shadow-lg" : "bg-transparent"
+      }`}
+    >
+      <div className="container mx-auto px-4 flex items-center justify-between h-18">
         {/* Logo */}
-        <button onClick={() => scrollTo("#hero")} className="text-lg font-bold text-primary">
-          {language === "he" ? "עו\"ד איתן לוז" : "Eitan Luz, Adv."}
+        <button onClick={() => scrollTo("#hero")} className="flex items-center gap-2 group">
+          <img src={logo} alt="לוגו עו״ד איתן לוז" className="h-14 w-auto object-contain" />
         </button>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6">
-          {navItems.map((item) => (
-            <button
+          {navItems.map((item, i) => (
+            <motion.button
               key={item.href}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * i + 0.3 }}
               onClick={() => scrollTo(item.href)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
             >
               {item.label}
-            </button>
+            </motion.button>
           ))}
           <Button
             variant="ghost"
@@ -87,7 +105,7 @@ const Header: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </motion.header>
   );
 };
 
