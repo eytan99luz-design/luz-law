@@ -140,6 +140,16 @@ const DocumentsTab: React.FC = () => {
   useEffect(() => {
     loadDocuments();
     loadClients();
+    // Load preset signature
+    const loadPreset = async () => {
+      const { data } = await supabase
+        .from("admin_settings" as any)
+        .select("value")
+        .eq("key", "preset_signature_url")
+        .single();
+      if (data) setPresetSignatureUrl((data as any).value);
+    };
+    loadPreset();
   }, []);
 
   // Clean up signature pad when counter-sign dialog closes
