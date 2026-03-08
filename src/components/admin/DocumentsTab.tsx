@@ -96,6 +96,7 @@ const DocumentsTab: React.FC = () => {
     } else {
       toast({ title: "המסמך הועלה בהצלחה" });
       setNewTitle("");
+      setSelectedFile(null);
     }
     setUploading(false);
     loadDocuments();
