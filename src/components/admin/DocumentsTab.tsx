@@ -91,8 +91,16 @@ const DocumentsTab: React.FC = () => {
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [counterSigning, setCounterSigning] = useState(false);
 
-  const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const sigPadRef = useRef<SignaturePad | null>(null);
+
+  const sigCanvasCallback = (canvas: HTMLCanvasElement | null) => {
+    if (canvas && !sigPadRef.current) {
+      sigPadRef.current = new SignaturePad(canvas, {
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        penColor: "rgb(0, 0, 0)",
+      });
+    }
+  };
 
   const loadClients = async () => {
     const { data } = await supabase
