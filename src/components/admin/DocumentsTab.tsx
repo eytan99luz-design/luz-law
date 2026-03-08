@@ -251,7 +251,22 @@ const DocumentsTab: React.FC = () => {
                               size="sm"
                               variant="outline"
                               className="text-green-600"
-                              onClick={() => window.open(sub.signed_pdf_url!, '_blank', 'noopener,noreferrer')}
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(sub.signed_pdf_url!);
+                                  const blob = await response.blob();
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = `signed_${sub.signer_name || 'document'}.pdf`;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  document.body.removeChild(a);
+                                  URL.revokeObjectURL(url);
+                                } catch {
+                                  toast({ title: "שגיאה בהורדת הקובץ", variant: "destructive" });
+                                }
+                              }}
                             >
                               <FileText className="h-3 w-3 ml-1" />
                               PDF חתום
