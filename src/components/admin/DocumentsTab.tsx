@@ -715,7 +715,7 @@ const DocumentsTab: React.FC = () => {
             <div>
               <Label>החתימה שלך</Label>
               <canvas
-                ref={sigCanvasRef}
+                ref={sigCanvasCallback}
                 width={450}
                 height={180}
                 className="border border-border rounded w-full"
