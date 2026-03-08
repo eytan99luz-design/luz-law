@@ -84,12 +84,15 @@ const DocumentsTab: React.FC = () => {
     open: boolean;
     sub: Submission | null;
     docTitle: string;
-  }>({ open: false, sub: null, docTitle: "" });
+    documentId: string;
+  }>({ open: false, sub: null, docTitle: "", documentId: "" });
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [counterSigning, setCounterSigning] = useState(false);
+  const [signMode, setSignMode] = useState<"manual" | "preset">("preset");
+  const [presetSignatureUrl, setPresetSignatureUrl] = useState<string | null>(null);
 
   const sigPadRef = useRef<SignaturePad | null>(null);
 
