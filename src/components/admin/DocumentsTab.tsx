@@ -75,7 +75,7 @@ const DocumentsTab: React.FC = () => {
     const fileName = `${Date.now()}_${selectedFile.name}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("documents")
-      .upload(fileName, file, { contentType: "application/pdf" });
+      .upload(fileName, selectedFile, { contentType: "application/pdf" });
 
     if (uploadError) {
       toast({ title: "שגיאה בהעלאת הקובץ", variant: "destructive" });
