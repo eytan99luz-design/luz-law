@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Trash2, Save, MessageSquare, Star, HelpCircle, BarChart3, Eye, EyeOff, FileText, PenTool } from "lucide-react";
+import { LogOut, Plus, Trash2, Save, MessageSquare, Star, HelpCircle, BarChart3, Eye, EyeOff, FileText, PenTool, Users, Calendar, LayoutDashboard } from "lucide-react";
 import DocumentsTab from "@/components/admin/DocumentsTab";
+import ClientsTab from "@/components/admin/ClientsTab";
+import AppointmentsTab from "@/components/admin/AppointmentsTab";
+import DashboardTab from "@/components/admin/DashboardTab";
 import logoDark from "@/assets/logo-dark.jpg";
 
 type Testimonial = {
@@ -218,11 +221,27 @@ const Admin: React.FC = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="contacts" className="space-y-6">
+        <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList className="bg-card border border-border flex-wrap">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary/20">
+              <LayoutDashboard className="h-4 w-4 ml-1" />
+              דשבורד
+            </TabsTrigger>
+            <TabsTrigger value="clients" className="data-[state=active]:bg-primary/20">
+              <Users className="h-4 w-4 ml-1" />
+              לקוחות
+            </TabsTrigger>
+            <TabsTrigger value="appointments" className="data-[state=active]:bg-primary/20">
+              <Calendar className="h-4 w-4 ml-1" />
+              פגישות
+            </TabsTrigger>
             <TabsTrigger value="contacts" className="data-[state=active]:bg-primary/20">
               <MessageSquare className="h-4 w-4 ml-1" />
               פניות ({contacts.filter(c => !c.is_read).length})
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="data-[state=active]:bg-primary/20">
+              <PenTool className="h-4 w-4 ml-1" />
+              מסמכים
             </TabsTrigger>
             <TabsTrigger value="testimonials" className="data-[state=active]:bg-primary/20">
               <Star className="h-4 w-4 ml-1" />
@@ -240,11 +259,22 @@ const Admin: React.FC = () => {
               <FileText className="h-4 w-4 ml-1" />
               מאמרים
             </TabsTrigger>
-            <TabsTrigger value="documents" className="data-[state=active]:bg-primary/20">
-              <PenTool className="h-4 w-4 ml-1" />
-              מסמכים
-            </TabsTrigger>
           </TabsList>
+
+          {/* Dashboard */}
+          <TabsContent value="dashboard">
+            <DashboardTab />
+          </TabsContent>
+
+          {/* Clients */}
+          <TabsContent value="clients">
+            <ClientsTab />
+          </TabsContent>
+
+          {/* Appointments */}
+          <TabsContent value="appointments">
+            <AppointmentsTab />
+          </TabsContent>
 
           {/* Contact Submissions */}
           <TabsContent value="contacts" className="space-y-4">
