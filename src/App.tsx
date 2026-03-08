@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
 import BlogPost from "./pages/BlogPost";
+import DocumentEditor from "./pages/DocumentEditor";
+import SignDocument from "./pages/SignDocument";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
