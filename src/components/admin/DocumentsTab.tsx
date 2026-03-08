@@ -278,6 +278,20 @@ const DocumentsTab: React.FC = () => {
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
+                          {sub.status === "pending" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-green-600"
+                              onClick={() => {
+                                setWhatsappDialog({ open: true, token: sub.token, docTitle: doc.title });
+                                setClientName("");
+                                setClientPhone("");
+                              }}
+                            >
+                              <MessageCircle className="h-3 w-3" />
+                            </Button>
+                          )}
                           {sub.signed_pdf_url && (
                             <Button
                               size="sm"
@@ -314,6 +328,46 @@ const DocumentsTab: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* WhatsApp Dialog */}
+      <Dialog open={whatsappDialog.open} onOpenChange={(open) => setWhatsappDialog((prev) => ({ ...prev, open }))}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>שליחת קישור חתימה בוואטסאפ</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>שם הלקוח</Label>
+              <Input
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="לדוגמה: ישראל ישראלי"
+              />
+            </div>
+            <div>
+              <Label>מספר טלפון <span className="text-destructive">*</span></Label>
+              <Input
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                placeholder="050-1234567"
+                dir="ltr"
+              />
+            </div>
+            <div className="bg-muted/50 rounded p-3 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">תצוגה מקדימה:</p>
+              <p className="whitespace-pre-line">
+                {`היי ${clientName.trim() || "לקוח/ה יקר/ה"}, מצורף ${whatsappDialog.docTitle} לחתימה:\n[קישור לחתימה]\n\nבברכה,\nעו"ד איתן לוז`}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSendWhatsApp} className="bg-green-600 hover:bg-green-700 text-white gap-2">
+              <Send className="h-4 w-4" />
+              שלח בוואטסאפ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
