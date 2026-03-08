@@ -10,6 +10,7 @@ import logo from "@/assets/logo-dark.jpg";
 
 const Header: React.FC = () => {
   const { t, language, toggleLanguage } = useLanguage();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
