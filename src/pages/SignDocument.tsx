@@ -194,6 +194,10 @@ const SignDocument: React.FC = () => {
       // Embed a Unicode font for Hebrew support
       const fontBytes = await fetch("/fonts/NotoSansHebrew-Regular.ttf").then((r) => r.arrayBuffer());
       const customFont = await pdfDocLib.embedFont(fontBytes);
+      const standardFont = await pdfDocLib.embedFont(StandardFonts.Helvetica);
+
+      // Helper to check if text is Latin/digits only
+      const isLatinOnly = (text: string) => /^[\x00-\x7F]*$/.test(text);
 
       // Write field values onto PDF
       for (const field of fields) {
@@ -216,11 +220,13 @@ const SignDocument: React.FC = () => {
           const { height: pageHeight } = page.getSize();
           const pdfX = field.x / 1.5;
           const pdfY = pageHeight - (field.y / 1.5) - 12;
-          page.drawText(fieldValues[field.id], {
+          const text = fieldValues[field.id];
+          const fontToUse = isLatinOnly(text) ? standardFont : customFont;
+          page.drawText(text, {
             x: pdfX,
             y: pdfY,
             size: 11,
-            font: customFont,
+            font: fontToUse,
             color: rgb(0, 0, 0),
           });
         }
