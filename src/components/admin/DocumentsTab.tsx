@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, FileText, Link2, Copy, Eye, Upload, MessageCircle, Send, Mail } from "lucide-react";
+import { Plus, Trash2, FileText, Link2, Copy, Eye, Upload, MessageCircle, Send, Mail, Download, PenLine, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,6 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import SignaturePad from "signature_pad";
+import { PDFDocument, rgb } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 
 type Client = {
   id: string;
@@ -46,6 +49,9 @@ type Submission = {
   status: string;
   signed_at: string | null;
   signed_pdf_url: string | null;
+  admin_signature_data: string | null;
+  admin_signed_at: string | null;
+  final_pdf_url: string | null;
   created_at: string;
 };
 
@@ -68,10 +74,25 @@ const DocumentsTab: React.FC = () => {
     token: string;
     docTitle: string;
   }>({ open: false, token: "", docTitle: "" });
+  const [sendSignedDialog, setSendSignedDialog] = useState<{
+    open: boolean;
+    sub: Submission | null;
+    docTitle: string;
+    mode: "whatsapp" | "email";
+  }>({ open: false, sub: null, docTitle: "", mode: "whatsapp" });
+  const [counterSignDialog, setCounterSignDialog] = useState<{
+    open: boolean;
+    sub: Submission | null;
+    docTitle: string;
+  }>({ open: false, sub: null, docTitle: "" });
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [counterSigning, setCounterSigning] = useState(false);
+
+  const sigCanvasRef = useRef<HTMLCanvasElement>(null);
+  const sigPadRef = useRef<SignaturePad | null>(null);
 
   const loadClients = async () => {
     const { data } = await supabase
@@ -109,6 +130,19 @@ const DocumentsTab: React.FC = () => {
     loadDocuments();
     loadClients();
   }, []);
+
+  // Init signature pad when counter-sign dialog opens
+  useEffect(() => {
+    if (counterSignDialog.open && sigCanvasRef.current && !sigPadRef.current) {
+      sigPadRef.current = new SignaturePad(sigCanvasRef.current, {
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        penColor: "rgb(0, 0, 0)",
+      });
+    }
+    if (!counterSignDialog.open) {
+      sigPadRef.current = null;
+    }
+  }, [counterSignDialog.open]);
 
   const handleUploadPDF = async () => {
     if (!selectedFile || !newTitle.trim()) {
@@ -251,6 +285,141 @@ const DocumentsTab: React.FC = () => {
     setEmailDialog({ open: true, token, docTitle });
   };
 
+  // Counter-sign: admin adds signature to the already-signed PDF
+  const handleCounterSign = async () => {
+    if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
+      toast({ title: "נא לחתום לפני השמירה", variant: "destructive" });
+      return;
+    }
+    if (!counterSignDialog.sub?.signed_pdf_url) return;
+
+    setCounterSigning(true);
+    try {
+      const adminSigData = sigPadRef.current.toDataURL("image/png");
+
+      // Load the client-signed PDF
+      const pdfBytes = await fetch(counterSignDialog.sub.signed_pdf_url).then((r) => r.arrayBuffer());
+      const pdfDocLib = await PDFDocument.load(pdfBytes);
+      const pages = pdfDocLib.getPages();
+      const lastPage = pages[pages.length - 1];
+      const { width: pageWidth, height: pageHeight } = lastPage.getSize();
+
+      // Embed admin signature as PNG (transparent)
+      const sigImg = await pdfDocLib.embedPng(adminSigData);
+      const sigAspect = sigImg.width / sigImg.height;
+      const sigWidth = 150;
+      const sigHeight = sigWidth / sigAspect;
+
+      // Place admin signature at bottom-left area
+      lastPage.drawImage(sigImg, {
+        x: 50,
+        y: 50,
+        width: sigWidth,
+        height: sigHeight,
+      });
+
+      // Add label
+      pdfDocLib.registerFontkit(fontkit);
+      const fontBytes = await fetch("/fonts/NotoSansHebrew-Regular.ttf").then((r) => r.arrayBuffer());
+      const customFont = await pdfDocLib.embedFont(fontBytes);
+      lastPage.drawText('חתימת עו"ד:', {
+        x: 50,
+        y: 50 + sigHeight + 5,
+        size: 9,
+        font: customFont,
+        color: rgb(0.3, 0.3, 0.3),
+      });
+
+      const finalPdfBytes = await pdfDocLib.save();
+      const finalBlob = new Blob([finalPdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      const fileName = `final_${counterSignDialog.sub.id}_${Date.now()}.pdf`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(fileName, finalBlob, { contentType: "application/pdf" });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("documents").getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from("document_submissions")
+        .update({
+          admin_signature_data: adminSigData,
+          admin_signed_at: new Date().toISOString(),
+          final_pdf_url: urlData.publicUrl,
+        } as any)
+        .eq("id", counterSignDialog.sub.id);
+
+      if (updateError) throw updateError;
+
+      toast({ title: "החתימה נוספה בהצלחה!" });
+      setCounterSignDialog({ open: false, sub: null, docTitle: "" });
+      loadDocuments();
+    } catch (err: any) {
+      console.error("Counter-sign error:", err);
+      toast({ title: "שגיאה בחתימה: " + (err?.message || "שגיאה"), variant: "destructive" });
+    } finally {
+      setCounterSigning(false);
+    }
+  };
+
+  const downloadPdf = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast({ title: "שגיאה בהורדת הקובץ", variant: "destructive" });
+    }
+  };
+
+  const openSendSignedDialog = (sub: Submission, docTitle: string, mode: "whatsapp" | "email") => {
+    resetClientFields();
+    // Pre-fill from submission data
+    if (sub.signer_name) setClientName(sub.signer_name);
+    if (sub.signer_email) setClientEmail(sub.signer_email);
+    setSendSignedDialog({ open: true, sub, docTitle, mode });
+  };
+
+  const handleSendSignedWhatsApp = () => {
+    if (!clientPhone.trim()) {
+      toast({ title: "נא להזין מספר טלפון", variant: "destructive" });
+      return;
+    }
+    const pdfUrl = sendSignedDialog.sub?.final_pdf_url || sendSignedDialog.sub?.signed_pdf_url;
+    const name = clientName.trim() || "לקוח/ה יקר/ה";
+    const message = `היי ${name}, מצורף ${sendSignedDialog.docTitle} החתום שלך:\n${pdfUrl}\n\nבברכה,\nעו"ד איתן לוז`;
+    let phone = clientPhone.trim().replace(/[^0-9]/g, "");
+    if (phone.startsWith("0")) phone = "972" + phone.slice(1);
+    const waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+    setSendSignedDialog({ open: false, sub: null, docTitle: "", mode: "whatsapp" });
+    resetClientFields();
+  };
+
+  const handleSendSignedEmail = () => {
+    if (!clientEmail.trim()) {
+      toast({ title: "נא להזין כתובת מייל", variant: "destructive" });
+      return;
+    }
+    const pdfUrl = sendSignedDialog.sub?.final_pdf_url || sendSignedDialog.sub?.signed_pdf_url;
+    const name = clientName.trim() || "לקוח/ה יקר/ה";
+    const subject = `${sendSignedDialog.docTitle} - מסמך חתום`;
+    const body = `היי ${name},\n\nמצורף ${sendSignedDialog.docTitle} החתום שלך:\n${pdfUrl}\n\nבברכה,\nעו"ד איתן לוז`;
+    const mailtoUrl = `mailto:${clientEmail.trim()}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoUrl);
+    setSendSignedDialog({ open: false, sub: null, docTitle: "", mode: "email" });
+    resetClientFields();
+  };
+
   const ClientSelector = () => (
     <div>
       <Label>בחר לקוח מהרשימה</Label>
@@ -355,85 +524,104 @@ const DocumentsTab: React.FC = () => {
                 <div className="border-t border-border pt-3 mt-3">
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">הגשות:</h4>
                   <div className="space-y-2">
-                    {doc.submissions.map((sub) => (
-                      <div key={sub.id} className="flex items-center justify-between bg-muted/30 rounded p-2 text-sm flex-wrap gap-2">
-                        <div className="flex items-center gap-3">
-                          {statusBadge(sub.status)}
-                          <span>{sub.signer_name || "לא מילא עדיין"}</span>
-                          {sub.signer_email && <span className="text-muted-foreground">{sub.signer_email}</span>}
-                          <span className="text-muted-foreground">
-                            {new Date(sub.created_at).toLocaleDateString("he-IL")}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={async () => {
-                              const link = `${window.location.origin}/sign/${sub.token}`;
-                              await navigator.clipboard.writeText(link);
-                              toast({ title: "הקישור הועתק" });
-                            }}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                          {sub.status === "pending" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-green-600"
-                                onClick={() => openWhatsAppDialog(sub.token, doc.title)}
-                              >
-                                <MessageCircle className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-blue-600"
-                                onClick={() => openEmailDialog(sub.token, doc.title)}
-                              >
-                                <Mail className="h-3 w-3" />
-                              </Button>
-                            </>
-                          )}
-                          {sub.signed_pdf_url && (
+                    {doc.submissions.map((sub) => {
+                      const hasFinal = !!(sub as any).final_pdf_url;
+                      const bestPdfUrl = (sub as any).final_pdf_url || sub.signed_pdf_url;
+                      return (
+                        <div key={sub.id} className="flex items-center justify-between bg-muted/30 rounded p-2 text-sm flex-wrap gap-2">
+                          <div className="flex items-center gap-3">
+                            {statusBadge(sub.status)}
+                            {hasFinal && <Badge className="bg-primary text-primary-foreground text-xs">חתום סופי</Badge>}
+                            <span>{sub.signer_name || "לא מילא עדיין"}</span>
+                            {sub.signer_email && <span className="text-muted-foreground">{sub.signer_email}</span>}
+                            <span className="text-muted-foreground">
+                              {new Date(sub.created_at).toLocaleDateString("he-IL")}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 flex-wrap">
                             <Button
                               size="sm"
-                              variant="outline"
-                              className="text-green-600"
+                              variant="ghost"
                               onClick={async () => {
-                                try {
-                                  const response = await fetch(sub.signed_pdf_url!);
-                                  const blob = await response.blob();
-                                  const url = URL.createObjectURL(blob);
-                                  const a = document.createElement('a');
-                                  a.href = url;
-                                  a.download = `signed_${sub.signer_name || 'document'}.pdf`;
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  document.body.removeChild(a);
-                                  URL.revokeObjectURL(url);
-                                } catch {
-                                  toast({ title: "שגיאה בהורדת הקובץ", variant: "destructive" });
-                                }
+                                const link = `${window.location.origin}/sign/${sub.token}`;
+                                await navigator.clipboard.writeText(link);
+                                toast({ title: "הקישור הועתק" });
                               }}
                             >
-                              <FileText className="h-3 w-3 ml-1" />
-                              PDF חתום
+                              <Copy className="h-3 w-3" />
                             </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-destructive"
-                            onClick={() => deleteSubmission(sub.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                            {sub.status === "pending" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-green-600"
+                                  onClick={() => openWhatsAppDialog(sub.token, doc.title)}
+                                >
+                                  <MessageCircle className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-blue-600"
+                                  onClick={() => openEmailDialog(sub.token, doc.title)}
+                                >
+                                  <Mail className="h-3 w-3" />
+                                </Button>
+                              </>
+                            )}
+                            {sub.status === "signed" && !hasFinal && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-primary border-primary/30"
+                                onClick={() => setCounterSignDialog({ open: true, sub, docTitle: doc.title })}
+                              >
+                                <PenLine className="h-3 w-3 ml-1" />
+                                חתימת עו"ד
+                              </Button>
+                            )}
+                            {bestPdfUrl && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-green-600"
+                                  onClick={() => downloadPdf(bestPdfUrl, `${hasFinal ? "final" : "signed"}_${sub.signer_name || "document"}.pdf`)}
+                                >
+                                  <Download className="h-3 w-3 ml-1" />
+                                  הורד PDF
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-green-600"
+                                  onClick={() => openSendSignedDialog(sub, doc.title, "whatsapp")}
+                                >
+                                  <MessageCircle className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-blue-600"
+                                  onClick={() => openSendSignedDialog(sub, doc.title, "email")}
+                                >
+                                  <Mail className="h-3 w-3" />
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive"
+                              onClick={() => deleteSubmission(sub.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -452,20 +640,11 @@ const DocumentsTab: React.FC = () => {
             <ClientSelector />
             <div>
               <Label>שם הלקוח</Label>
-              <Input
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder="לדוגמה: ישראל ישראלי"
-              />
+              <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="לדוגמה: ישראל ישראלי" />
             </div>
             <div>
               <Label>מספר טלפון <span className="text-destructive">*</span></Label>
-              <Input
-                value={clientPhone}
-                onChange={(e) => setClientPhone(e.target.value)}
-                placeholder="050-1234567"
-                dir="ltr"
-              />
+              <Input value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder="050-1234567" dir="ltr" />
             </div>
             <div className="bg-muted/50 rounded p-3 text-sm text-muted-foreground">
               <p className="font-medium text-foreground mb-1">תצוגה מקדימה:</p>
@@ -493,21 +672,11 @@ const DocumentsTab: React.FC = () => {
             <ClientSelector />
             <div>
               <Label>שם הלקוח</Label>
-              <Input
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder="לדוגמה: ישראל ישראלי"
-              />
+              <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="לדוגמה: ישראל ישראלי" />
             </div>
             <div>
               <Label>כתובת מייל <span className="text-destructive">*</span></Label>
-              <Input
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-                placeholder="example@email.com"
-                dir="ltr"
-                type="email"
-              />
+              <Input value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder="example@email.com" dir="ltr" type="email" />
             </div>
             <div className="bg-muted/50 rounded p-3 text-sm text-muted-foreground">
               <p className="font-medium text-foreground mb-1">תצוגה מקדימה:</p>
@@ -521,6 +690,106 @@ const DocumentsTab: React.FC = () => {
               <Mail className="h-4 w-4" />
               שלח במייל
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Counter-Sign Dialog */}
+      <Dialog
+        open={counterSignDialog.open}
+        onOpenChange={(open) => {
+          if (!open) sigPadRef.current = null;
+          setCounterSignDialog((prev) => ({ ...prev, open }));
+        }}
+      >
+        <DialogContent dir="rtl" className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>חתימת עו"ד - {counterSignDialog.docTitle}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              חתום על המסמך כדי ליצור קובץ סופי עם שתי החתימות
+            </p>
+            <div>
+              <Label>החתימה שלך</Label>
+              <canvas
+                ref={sigCanvasRef}
+                width={450}
+                height={180}
+                className="border border-border rounded w-full"
+                style={{ background: "repeating-conic-gradient(hsl(var(--muted)) 0% 25%, hsl(var(--background)) 0% 50%) 50% / 16px 16px" }}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => sigPadRef.current?.clear()}
+              >
+                נקה חתימה
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={handleCounterSign}
+              disabled={counterSigning}
+              className="bg-gradient-gold text-primary-foreground gap-2"
+            >
+              {counterSigning ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  שומר...
+                </>
+              ) : (
+                <>
+                  <PenLine className="h-4 w-4" />
+                  חתום וצור PDF סופי
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Signed PDF Dialog */}
+      <Dialog open={sendSignedDialog.open} onOpenChange={(open) => setSendSignedDialog((prev) => ({ ...prev, open }))}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              שליחת מסמך חתום {sendSignedDialog.mode === "whatsapp" ? "בוואטסאפ" : "במייל"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <ClientSelector />
+            <div>
+              <Label>שם הלקוח</Label>
+              <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="לדוגמה: ישראל ישראלי" />
+            </div>
+            {sendSignedDialog.mode === "whatsapp" ? (
+              <div>
+                <Label>מספר טלפון <span className="text-destructive">*</span></Label>
+                <Input value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder="050-1234567" dir="ltr" />
+              </div>
+            ) : (
+              <div>
+                <Label>כתובת מייל <span className="text-destructive">*</span></Label>
+                <Input value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder="example@email.com" dir="ltr" type="email" />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            {sendSignedDialog.mode === "whatsapp" ? (
+              <Button onClick={handleSendSignedWhatsApp} className="bg-green-600 hover:bg-green-700 text-white gap-2">
+                <Send className="h-4 w-4" />
+                שלח בוואטסאפ
+              </Button>
+            ) : (
+              <Button onClick={handleSendSignedEmail} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                <Mail className="h-4 w-4" />
+                שלח במייל
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
