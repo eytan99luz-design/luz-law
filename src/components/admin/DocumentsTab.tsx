@@ -34,7 +34,7 @@ const DocumentsTab: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const loadDocuments = async () => {
     setLoading(true);
