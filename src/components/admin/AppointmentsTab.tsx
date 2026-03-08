@@ -287,9 +287,19 @@ const AppointmentsTab: React.FC = () => {
               step={15}
             />
           </div>
+          <div className="flex items-center gap-3">
+            <Label className="min-w-fit">מספר וואטסאפ (לאישור פגישות):</Label>
+            <Input
+              value={adminWhatsApp}
+              onChange={(e) => setAdminWhatsApp(e.target.value)}
+              placeholder="972501234567"
+              className="w-48"
+              dir="ltr"
+            />
+          </div>
           <Button onClick={saveAvailability} disabled={savingAvail} className="bg-gradient-gold text-primary-foreground">
             <Save className="h-4 w-4 ml-1" />
-            {savingAvail ? "שומר..." : "שמור שעות פעילות"}
+            {savingAvail ? "שומר..." : "שמור הגדרות"}
           </Button>
         </div>
       )}
