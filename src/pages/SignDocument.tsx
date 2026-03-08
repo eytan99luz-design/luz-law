@@ -138,7 +138,7 @@ const SignDocument: React.FC = () => {
   useEffect(() => {
     if (showSigPad && sigCanvasRef.current && !sigPadRef.current) {
       sigPadRef.current = new SignaturePad(sigCanvasRef.current, {
-        backgroundColor: "rgb(255, 255, 255)",
+        backgroundColor: "rgba(0, 0, 0, 0)",
         penColor: "rgb(0, 0, 0)",
       });
     }
