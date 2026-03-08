@@ -155,7 +155,7 @@ const BookAppointment: React.FC = () => {
 
       // Calculate end time
       const [h, m] = selectedTime.split(":").map(Number);
-      const endMinutes = h * 60 + m + SLOT_DURATION;
+      const endMinutes = h * 60 + m + slotDuration;
       const endH = Math.floor(endMinutes / 60);
       const endM = endMinutes % 60;
       const endTime = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
