@@ -3,7 +3,7 @@ import { Language, translations, Translations } from "@/lib/i18n";
 
 interface LanguageContextType {
   language: Language;
-  t: Translations;
+  t: any;
   toggleLanguage: () => void;
   dir: "rtl" | "ltr";
 }
