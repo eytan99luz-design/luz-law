@@ -223,8 +223,70 @@ const AppointmentsTab: React.FC = () => {
           >
             <Plus className="h-4 w-4 ml-1" />
             פגישה חדשה
-        </Button>
+          </Button>
+        </div>
       </div>
+
+      {/* Availability Settings */}
+      {showSettings && (
+        <div className="bg-card border border-border rounded-lg p-4 space-y-4">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            הגדרת שעות פעילות
+          </h3>
+          <p className="text-sm text-muted-foreground">הגדר באילו ימים ושעות אתה זמין לפגישות</p>
+          <div className="space-y-3">
+            {[0, 1, 2, 3, 4, 5, 6].map((day) => (
+              <div key={day} className="flex items-center gap-3 flex-wrap">
+                <div className="w-16">
+                  <Switch
+                    checked={availability[day]?.enabled ?? false}
+                    onCheckedChange={(v) => updateDay(day, { enabled: v })}
+                  />
+                </div>
+                <span className={`w-16 text-sm font-medium ${availability[day]?.enabled ? "text-foreground" : "text-muted-foreground"}`}>
+                  {DAY_NAMES[day]}
+                </span>
+                {availability[day]?.enabled && (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={availability[day]?.start || "09:00"}
+                      onChange={(e) => updateDay(day, { start: e.target.value })}
+                      className="w-28"
+                      dir="ltr"
+                    />
+                    <span className="text-muted-foreground">עד</span>
+                    <Input
+                      type="time"
+                      value={availability[day]?.end || "17:00"}
+                      onChange={(e) => updateDay(day, { end: e.target.value })}
+                      className="w-28"
+                      dir="ltr"
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <Label>משך פגישה (דקות)</Label>
+            <Input
+              type="number"
+              value={slotDuration}
+              onChange={(e) => setSlotDuration(Number(e.target.value) || 30)}
+              className="w-20"
+              min={15}
+              max={120}
+              step={15}
+            />
+          </div>
+          <Button onClick={saveAvailability} disabled={savingAvail} className="bg-gradient-gold text-primary-foreground">
+            <Save className="h-4 w-4 ml-1" />
+            {savingAvail ? "שומר..." : "שמור שעות פעילות"}
+          </Button>
+        </div>
+      )}
 
       {/* View Toggle */}
       <div className="flex gap-2">
