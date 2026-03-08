@@ -39,6 +39,26 @@ type Appointment = {
   client_name?: string;
 };
 
+const DAY_NAMES = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+type DayAvailability = {
+  enabled: boolean;
+  start: string;
+  end: string;
+};
+
+type AvailabilityConfig = Record<number, DayAvailability>;
+
+const DEFAULT_AVAILABILITY: AvailabilityConfig = {
+  0: { enabled: true, start: "09:00", end: "17:00" },
+  1: { enabled: true, start: "09:00", end: "17:00" },
+  2: { enabled: true, start: "09:00", end: "17:00" },
+  3: { enabled: true, start: "09:00", end: "17:00" },
+  4: { enabled: true, start: "09:00", end: "17:00" },
+  5: { enabled: false, start: "09:00", end: "13:00" },
+  6: { enabled: false, start: "09:00", end: "13:00" },
+};
+
 const AppointmentsTab: React.FC = () => {
   const { toast } = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -47,13 +67,26 @@ const AppointmentsTab: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Appointment> | null>(null);
   const [viewMode, setViewMode] = useState<"upcoming" | "past" | "all">("upcoming");
+  const [availability, setAvailability] = useState<AvailabilityConfig>(DEFAULT_AVAILABILITY);
+  const [slotDuration, setSlotDuration] = useState(30);
+  const [savingAvail, setSavingAvail] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
-    const [appts, cls] = await Promise.all([
+    const [appts, cls, availSetting, slotSetting] = await Promise.all([
       supabase.from("appointments").select("*").order("appointment_date", { ascending: true }),
       supabase.from("clients").select("id, full_name").order("full_name"),
+      supabase.from("admin_settings" as any).select("value").eq("key", "availability").single(),
+      supabase.from("admin_settings" as any).select("value").eq("key", "slot_duration").single(),
     ]);
+
+    if (availSetting.data) {
+      try { setAvailability(JSON.parse((availSetting.data as any).value)); } catch {}
+    }
+    if (slotSetting.data) {
+      try { setSlotDuration(Number((slotSetting.data as any).value) || 30); } catch {}
+    }
 
     const clientMap = new Map<string, string>();
     if (cls.data) {
