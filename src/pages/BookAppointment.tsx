@@ -239,6 +239,19 @@ const BookAppointment: React.FC = () => {
           <p className="text-muted-foreground">
             {isHe ? "ניצור איתך קשר לאישור הפגישה. תודה!" : "We'll contact you to confirm. Thank you!"}
           </p>
+          {cancelToken && (
+            <div className="bg-muted/50 border border-border rounded-xl p-4 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                {isHe ? "צריך לבטל? השתמש בקישור הזה:" : "Need to cancel? Use this link:"}
+              </p>
+              <a
+                href={`${window.location.origin}/cancel-appointment/${cancelToken}`}
+                className="text-sm text-primary underline break-all"
+              >
+                {`${window.location.origin}/cancel-appointment/${cancelToken}`}
+              </a>
+            </div>
+          )}
           <Button variant="outline" onClick={() => navigate("/")}>
             <ArrowRight className="h-4 w-4 ml-1" />
             {isHe ? "חזרה לאתר" : "Back to site"}
