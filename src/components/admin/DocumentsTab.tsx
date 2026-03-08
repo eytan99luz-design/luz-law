@@ -22,8 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SignaturePad from "signature_pad";
-import { PDFDocument, rgb } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument } from "pdf-lib";
 
 type Client = {
   id: string;
@@ -84,12 +83,15 @@ const DocumentsTab: React.FC = () => {
     open: boolean;
     sub: Submission | null;
     docTitle: string;
-  }>({ open: false, sub: null, docTitle: "" });
+    documentId: string;
+  }>({ open: false, sub: null, docTitle: "", documentId: "" });
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [counterSigning, setCounterSigning] = useState(false);
+  const [signMode, setSignMode] = useState<"manual" | "preset">("preset");
+  const [presetSignatureUrl, setPresetSignatureUrl] = useState<string | null>(null);
 
   const sigPadRef = useRef<SignaturePad | null>(null);
 
@@ -137,6 +139,16 @@ const DocumentsTab: React.FC = () => {
   useEffect(() => {
     loadDocuments();
     loadClients();
+    // Load preset signature
+    const loadPreset = async () => {
+      const { data } = await supabase
+        .from("admin_settings" as any)
+        .select("value")
+        .eq("key", "preset_signature_url")
+        .single();
+      if (data) setPresetSignatureUrl((data as any).value);
+    };
+    loadPreset();
   }, []);
 
   // Clean up signature pad when counter-sign dialog closes
@@ -289,48 +301,79 @@ const DocumentsTab: React.FC = () => {
 
   // Counter-sign: admin adds signature to the already-signed PDF
   const handleCounterSign = async () => {
-    if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
-      toast({ title: "נא לחתום לפני השמירה", variant: "destructive" });
-      return;
+    let adminSigData: string;
+
+    if (signMode === "manual") {
+      if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
+        toast({ title: "נא לחתום לפני השמירה", variant: "destructive" });
+        return;
+      }
+      adminSigData = sigPadRef.current.toDataURL("image/png");
+    } else {
+      if (!presetSignatureUrl) {
+        toast({ title: "לא הוגדרה חתימה קבועה. העלה חתימה בעורך המסמך.", variant: "destructive" });
+        return;
+      }
+      // Fetch the preset image and convert to data URL
+      const resp = await fetch(presetSignatureUrl);
+      const blob = await resp.blob();
+      adminSigData = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
     }
+
     if (!counterSignDialog.sub?.signed_pdf_url) return;
 
     setCounterSigning(true);
     try {
-      const adminSigData = sigPadRef.current.toDataURL("image/png");
+      // Load admin_signature field positions for this document
+      const { data: adminFields } = await supabase
+        .from("document_fields")
+        .select("*")
+        .eq("document_id", counterSignDialog.documentId)
+        .eq("field_type", "admin_signature");
 
       // Load the client-signed PDF
       const pdfBytes = await fetch(counterSignDialog.sub.signed_pdf_url).then((r) => r.arrayBuffer());
       const pdfDocLib = await PDFDocument.load(pdfBytes);
       const pages = pdfDocLib.getPages();
-      const lastPage = pages[pages.length - 1];
-      const { width: pageWidth, height: pageHeight } = lastPage.getSize();
 
-      // Embed admin signature as PNG (transparent)
-      const sigImg = await pdfDocLib.embedPng(adminSigData);
-      const sigAspect = sigImg.width / sigImg.height;
-      const sigWidth = 150;
-      const sigHeight = sigWidth / sigAspect;
+      // Determine if it's PNG or JPEG from the data URL
+      const isPng = adminSigData.includes("image/png");
+      const sigImg = isPng
+        ? await pdfDocLib.embedPng(adminSigData)
+        : await pdfDocLib.embedJpg(adminSigData);
 
-      // Place admin signature at bottom-left area
-      lastPage.drawImage(sigImg, {
-        x: 50,
-        y: 50,
-        width: sigWidth,
-        height: sigHeight,
-      });
-
-      // Add label
-      pdfDocLib.registerFontkit(fontkit);
-      const fontBytes = await fetch("/fonts/NotoSansHebrew-Regular.ttf").then((r) => r.arrayBuffer());
-      const customFont = await pdfDocLib.embedFont(fontBytes);
-      lastPage.drawText('חתימת עו"ד:', {
-        x: 50,
-        y: 50 + sigHeight + 5,
-        size: 9,
-        font: customFont,
-        color: rgb(0.3, 0.3, 0.3),
-      });
+      if (adminFields && adminFields.length > 0) {
+        // Place signature at each admin_signature field position
+        for (const field of adminFields) {
+          const page = pages[field.page_number - 1];
+          if (!page) continue;
+          const { height: pageHeight } = page.getSize();
+          const pdfX = field.x / 1.5;
+          const pdfY = pageHeight - (field.y / 1.5) - (field.height / 1.5);
+          page.drawImage(sigImg, {
+            x: pdfX,
+            y: pdfY,
+            width: field.width / 1.5,
+            height: field.height / 1.5,
+          });
+        }
+      } else {
+        // Fallback: place at bottom-left of last page
+        const lastPage = pages[pages.length - 1];
+        const sigAspect = sigImg.width / sigImg.height;
+        const sigWidth = 150;
+        const sigHeight = sigWidth / sigAspect;
+        lastPage.drawImage(sigImg, {
+          x: 50,
+          y: 50,
+          width: sigWidth,
+          height: sigHeight,
+        });
+      }
 
       const finalPdfBytes = await pdfDocLib.save();
       const finalBlob = new Blob([finalPdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
@@ -356,7 +399,7 @@ const DocumentsTab: React.FC = () => {
       if (updateError) throw updateError;
 
       toast({ title: "החתימה נוספה בהצלחה!" });
-      setCounterSignDialog({ open: false, sub: null, docTitle: "" });
+      setCounterSignDialog({ open: false, sub: null, docTitle: "", documentId: "" });
       loadDocuments();
     } catch (err: any) {
       console.error("Counter-sign error:", err);
@@ -577,7 +620,7 @@ const DocumentsTab: React.FC = () => {
                                 size="sm"
                                 variant="outline"
                                 className="text-primary border-primary/30"
-                                onClick={() => setCounterSignDialog({ open: true, sub, docTitle: doc.title })}
+                                onClick={() => setCounterSignDialog({ open: true, sub, docTitle: doc.title, documentId: doc.id })}
                               >
                                 <PenLine className="h-3 w-3 ml-1" />
                                 חתימת עו"ד
@@ -710,27 +753,60 @@ const DocumentsTab: React.FC = () => {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              חתום על המסמך כדי ליצור קובץ סופי עם שתי החתימות
+              בחר אופן חתימה וצור קובץ סופי עם שתי החתימות
             </p>
-            <div>
-              <Label>החתימה שלך</Label>
-              <canvas
-                ref={sigCanvasCallback}
-                width={450}
-                height={180}
-                className="border border-border rounded w-full"
-                style={{ background: "repeating-conic-gradient(hsl(var(--muted)) 0% 25%, hsl(var(--background)) 0% 50%) 50% / 16px 16px" }}
-              />
-            </div>
+
+            {/* Mode selector */}
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="outline"
-                onClick={() => sigPadRef.current?.clear()}
+                variant={signMode === "preset" ? "default" : "outline"}
+                onClick={() => setSignMode("preset")}
               >
-                נקה חתימה
+                חתימה קבועה
+              </Button>
+              <Button
+                size="sm"
+                variant={signMode === "manual" ? "default" : "outline"}
+                onClick={() => setSignMode("manual")}
+              >
+                חתימה ידנית
               </Button>
             </div>
+
+            {signMode === "preset" ? (
+              <div className="space-y-2">
+                <Label>חתימה/חותמת קבועה</Label>
+                {presetSignatureUrl ? (
+                  <div className="border border-border rounded p-3"
+                    style={{ background: "repeating-conic-gradient(hsl(var(--muted)) 0% 25%, hsl(var(--background)) 0% 50%) 50% / 16px 16px" }}>
+                    <img src={presetSignatureUrl} alt="חתימה קבועה" className="max-h-24 mx-auto" />
+                  </div>
+                ) : (
+                  <div className="border border-dashed border-border rounded p-4 text-center text-sm text-muted-foreground">
+                    לא הוגדרה חתימה קבועה. היכנס לעורך המסמך כדי להעלות חתימה.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>חתום כאן</Label>
+                <canvas
+                  ref={sigCanvasCallback}
+                  width={450}
+                  height={180}
+                  className="border border-border rounded w-full"
+                  style={{ background: "repeating-conic-gradient(hsl(var(--muted)) 0% 25%, hsl(var(--background)) 0% 50%) 50% / 16px 16px" }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => sigPadRef.current?.clear()}
+                >
+                  נקה חתימה
+                </Button>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button

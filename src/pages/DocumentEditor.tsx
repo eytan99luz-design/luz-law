@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Plus, Trash2, Save, CheckCircle, GripVertical } from "lucide-react";
+import { ArrowRight, Plus, Trash2, Save, Upload } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -37,7 +37,8 @@ const FIELD_TYPES = [
   { value: "text", label: "טקסט" },
   { value: "id_number", label: "מספר זהות" },
   { value: "date", label: "תאריך" },
-  { value: "signature", label: "חתימה" },
+  { value: "signature", label: "חתימת לקוח" },
+  { value: "admin_signature", label: 'חתימת עו"ד' },
 ];
 
 const DocumentEditor: React.FC = () => {
@@ -57,6 +58,10 @@ const DocumentEditor: React.FC = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedField, setSelectedField] = useState<number | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+
+  // Admin preset signature
+  const [presetSignatureUrl, setPresetSignatureUrl] = useState<string | null>(null);
+  const [uploadingPreset, setUploadingPreset] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -81,6 +86,19 @@ const DocumentEditor: React.FC = () => {
     };
     load();
   }, [id]);
+
+  // Load preset signature
+  useEffect(() => {
+    const loadPreset = async () => {
+      const { data } = await supabase
+        .from("admin_settings" as any)
+        .select("value")
+        .eq("key", "preset_signature_url")
+        .single();
+      if (data) setPresetSignatureUrl((data as any).value);
+    };
+    loadPreset();
+  }, []);
 
   useEffect(() => {
     if (!doc?.pdf_url) return;
@@ -111,18 +129,24 @@ const DocumentEditor: React.FC = () => {
 
   const addField = (type: string) => {
     if (!id) return;
-    const label = type === "signature" ? "חתימה" : type === "id_number" ? "מספר זהות" : type === "date" ? "תאריך" : "שדה חדש";
+    const labelMap: Record<string, string> = {
+      signature: "חתימת לקוח",
+      admin_signature: 'חתימת עו"ד',
+      id_number: "מספר זהות",
+      date: "תאריך",
+      text: "שדה חדש",
+    };
     setFields([
       ...fields,
       {
         document_id: id,
         field_type: type,
-        label,
+        label: labelMap[type] || "שדה חדש",
         page_number: currentPage,
         x: 50,
         y: 50,
-        width: type === "signature" ? 200 : 180,
-        height: type === "signature" ? 80 : 30,
+        width: type === "signature" || type === "admin_signature" ? 200 : 180,
+        height: type === "signature" || type === "admin_signature" ? 80 : 30,
         required: true,
         sort_order: fields.length,
       },
@@ -157,9 +181,7 @@ const DocumentEditor: React.FC = () => {
 
   const saveFields = async () => {
     if (!id) return;
-    // Delete existing fields
     await supabase.from("document_fields").delete().eq("document_id", id);
-    // Insert updated fields
     const toInsert = fields.map(({ id: fid, ...rest }) => rest);
     if (toInsert.length > 0) {
       const { error } = await supabase.from("document_fields").insert(toInsert);
@@ -168,10 +190,8 @@ const DocumentEditor: React.FC = () => {
         return;
       }
     }
-    // Activate document
     await supabase.from("documents").update({ status: "active" }).eq("id", id);
     toast({ title: "השדות נשמרו והמסמך הופעל!" });
-    // Reload fields to get IDs
     const { data } = await supabase.from("document_fields").select("*").eq("document_id", id).order("sort_order");
     if (data) setFields(data as Field[]);
   };
@@ -185,6 +205,45 @@ const DocumentEditor: React.FC = () => {
     const arr = [...fields];
     arr[idx] = { ...arr[idx], ...updates };
     setFields(arr);
+  };
+
+  const handleUploadPresetSignature = async (file: File) => {
+    setUploadingPreset(true);
+    try {
+      const fileName = `admin_signature_${Date.now()}.png`;
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(fileName, file, { contentType: file.type });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("documents").getPublicUrl(fileName);
+      const url = urlData.publicUrl;
+
+      // Upsert to admin_settings
+      const { data: existing } = await supabase
+        .from("admin_settings" as any)
+        .select("id")
+        .eq("key", "preset_signature_url")
+        .single();
+
+      if (existing) {
+        await supabase
+          .from("admin_settings" as any)
+          .update({ value: url, updated_at: new Date().toISOString() } as any)
+          .eq("key", "preset_signature_url");
+      } else {
+        await supabase
+          .from("admin_settings" as any)
+          .insert({ key: "preset_signature_url", value: url } as any);
+      }
+
+      setPresetSignatureUrl(url);
+      toast({ title: "החתימה/חותמת הקבועה נשמרה!" });
+    } catch (err: any) {
+      toast({ title: "שגיאה בהעלאה: " + (err?.message || "שגיאה"), variant: "destructive" });
+    } finally {
+      setUploadingPreset(false);
+    }
   };
 
   const pageFields = fields.filter((f) => f.page_number === currentPage);
@@ -235,6 +294,30 @@ const DocumentEditor: React.FC = () => {
                   {ft.label}
                 </Button>
               ))}
+            </div>
+          </div>
+
+          {/* Preset signature upload */}
+          <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+            <h3 className="font-semibold text-foreground">חתימה/חותמת קבועה</h3>
+            <p className="text-xs text-muted-foreground">העלה תמונת חתימה+חותמת שתשמש כברירת מחדל (רקע שקוף מומלץ)</p>
+            {presetSignatureUrl && (
+              <div className="border border-border rounded p-2"
+                style={{ background: "repeating-conic-gradient(hsl(var(--muted)) 0% 25%, hsl(var(--background)) 0% 50%) 50% / 16px 16px" }}>
+                <img src={presetSignatureUrl} alt="חתימה קבועה" className="max-h-20 mx-auto" />
+              </div>
+            )}
+            <div>
+              <Input
+                type="file"
+                accept="image/*"
+                disabled={uploadingPreset}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUploadPresetSignature(file);
+                }}
+                className="file:ml-2 file:bg-primary/10 file:text-primary file:border-0 file:rounded file:px-3 file:py-1 file:text-xs"
+              />
             </div>
           </div>
 
@@ -343,14 +426,16 @@ const DocumentEditor: React.FC = () => {
             onMouseLeave={handleMouseUp}
           >
             <canvas ref={canvasRef} />
-            {/* Field overlays */}
-            {pageFields.map((field, _) => {
+            {pageFields.map((field) => {
               const idx = fields.indexOf(field);
+              const isAdmin = field.field_type === "admin_signature";
               return (
                 <div
                   key={idx}
                   className={`absolute border-2 rounded cursor-move flex items-center justify-center text-xs font-medium transition-colors ${
-                    field.field_type === "signature"
+                    isAdmin
+                      ? "border-amber-500/70 bg-amber-50/50"
+                      : field.field_type === "signature"
                       ? "border-primary/70 bg-primary/10"
                       : "border-blue-500/70 bg-blue-50/50"
                   } ${selectedField === idx ? "ring-2 ring-primary" : ""}`}
@@ -362,9 +447,13 @@ const DocumentEditor: React.FC = () => {
                   }}
                   onMouseDown={(e) => handleMouseDown(e, idx)}
                 >
-                  <span className="pointer-events-none select-none text-foreground/70 truncate px-1">
-                    {field.label}
-                  </span>
+                  {isAdmin && presetSignatureUrl ? (
+                    <img src={presetSignatureUrl} alt='חתימת עו"ד' className="max-w-full max-h-full opacity-40" />
+                  ) : (
+                    <span className="pointer-events-none select-none text-foreground/70 truncate px-1">
+                      {field.label}
+                    </span>
+                  )}
                 </div>
               );
             })}
