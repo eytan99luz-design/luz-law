@@ -1,7 +1,7 @@
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Phone, Mail, MapPin } from "lucide-react";
-import logo from "@/assets/logo.jpg";
+import logo from "@/assets/logo-dark.jpg";
 
 const Footer: React.FC = () => {
   const { t, language } = useLanguage();
