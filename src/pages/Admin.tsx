@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Trash2, Save, MessageSquare, Star, HelpCircle, BarChart3, Eye, EyeOff, FileText } from "lucide-react";
+import { LogOut, Plus, Trash2, Save, MessageSquare, Star, HelpCircle, BarChart3, Eye, EyeOff, FileText, PenTool } from "lucide-react";
+import DocumentsTab from "@/components/admin/DocumentsTab";
 import logoDark from "@/assets/logo-dark.jpg";
 
 type Testimonial = {
@@ -238,6 +239,10 @@ const Admin: React.FC = () => {
             <TabsTrigger value="blog" className="data-[state=active]:bg-primary/20">
               <FileText className="h-4 w-4 ml-1" />
               מאמרים
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="data-[state=active]:bg-primary/20">
+              <PenTool className="h-4 w-4 ml-1" />
+              מסמכים
             </TabsTrigger>
           </TabsList>
 
@@ -523,6 +528,11 @@ const Admin: React.FC = () => {
                 </div>
               ))}
             </div>
+          </TabsContent>
+
+          {/* Documents */}
+          <TabsContent value="documents">
+            <DocumentsTab />
           </TabsContent>
         </Tabs>
       </main>

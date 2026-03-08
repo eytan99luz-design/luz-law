@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
 import BlogPost from "./pages/BlogPost";
+import DocumentEditor from "./pages/DocumentEditor";
+import SignDocument from "./pages/SignDocument";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/document/:id" element={<DocumentEditor />} />
+            <Route path="/sign/:token" element={<SignDocument />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
