@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Save, Calendar, Clock, MapPin, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Trash2, Save, Calendar, Clock, MapPin, CheckCircle, XCircle, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
