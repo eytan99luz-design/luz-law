@@ -11,6 +11,7 @@ import BlogPost from "./pages/BlogPost";
 import DocumentEditor from "./pages/DocumentEditor";
 import SignDocument from "./pages/SignDocument";
 import BookAppointment from "./pages/BookAppointment";
+import CancelAppointment from "./pages/CancelAppointment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
