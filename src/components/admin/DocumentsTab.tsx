@@ -91,8 +91,16 @@ const DocumentsTab: React.FC = () => {
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [counterSigning, setCounterSigning] = useState(false);
 
-  const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const sigPadRef = useRef<SignaturePad | null>(null);
+
+  const sigCanvasCallback = (canvas: HTMLCanvasElement | null) => {
+    if (canvas && !sigPadRef.current) {
+      sigPadRef.current = new SignaturePad(canvas, {
+        backgroundColor: "rgba(0, 0, 0, 0)",
+        penColor: "rgb(0, 0, 0)",
+      });
+    }
+  };
 
   const loadClients = async () => {
     const { data } = await supabase
@@ -131,14 +139,8 @@ const DocumentsTab: React.FC = () => {
     loadClients();
   }, []);
 
-  // Init signature pad when counter-sign dialog opens
+  // Clean up signature pad when counter-sign dialog closes
   useEffect(() => {
-    if (counterSignDialog.open && sigCanvasRef.current && !sigPadRef.current) {
-      sigPadRef.current = new SignaturePad(sigCanvasRef.current, {
-        backgroundColor: "rgba(0, 0, 0, 0)",
-        penColor: "rgb(0, 0, 0)",
-      });
-    }
     if (!counterSignDialog.open) {
       sigPadRef.current = null;
     }
@@ -713,7 +715,7 @@ const DocumentsTab: React.FC = () => {
             <div>
               <Label>החתימה שלך</Label>
               <canvas
-                ref={sigCanvasRef}
+                ref={sigCanvasCallback}
                 width={450}
                 height={180}
                 className="border border-border rounded w-full"
