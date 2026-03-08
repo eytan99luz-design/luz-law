@@ -191,8 +191,9 @@ const AppointmentsTab: React.FC = () => {
       await Promise.all([
         upsert("availability", JSON.stringify(availability)),
         upsert("slot_duration", String(slotDuration)),
+        upsert("admin_whatsapp", adminWhatsApp.trim()),
       ]);
-      toast({ title: "שעות הפעילות נשמרו!" });
+      toast({ title: "ההגדרות נשמרו!" });
     } catch (err: any) {
       toast({ title: "שגיאה בשמירה", variant: "destructive" });
     } finally {
