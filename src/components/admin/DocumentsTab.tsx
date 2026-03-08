@@ -247,12 +247,15 @@ const DocumentsTab: React.FC = () => {
                             <Copy className="h-3 w-3" />
                           </Button>
                           {sub.signed_pdf_url && (
-                            <a href={sub.signed_pdf_url} target="_blank" rel="noopener noreferrer">
-                              <Button size="sm" variant="outline" className="text-green-600">
-                                <FileText className="h-3 w-3 ml-1" />
-                                PDF חתום
-                              </Button>
-                            </a>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-green-600"
+                              onClick={() => window.open(sub.signed_pdf_url!, '_blank', 'noopener,noreferrer')}
+                            >
+                              <FileText className="h-3 w-3 ml-1" />
+                              PDF חתום
+                            </Button>
                           )}
                         </div>
                       </div>
