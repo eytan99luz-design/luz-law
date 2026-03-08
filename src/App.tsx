@@ -26,6 +26,8 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/document/:id" element={<DocumentEditor />} />
+            <Route path="/sign/:token" element={<SignDocument />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

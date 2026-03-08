@@ -529,6 +529,11 @@ const Admin: React.FC = () => {
               ))}
             </div>
           </TabsContent>
+
+          {/* Documents */}
+          <TabsContent value="documents">
+            <DocumentsTab />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
