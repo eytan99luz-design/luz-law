@@ -73,6 +73,9 @@ const BookAppointment: React.FC = () => {
       if (slotRes.data) {
         try { setSlotDuration(Number((slotRes.data as any).value) || 30); } catch {}
       }
+      if (phoneRes.data) {
+        try { setAdminPhone((phoneRes.data as any).value || ""); } catch {}
+      }
       setLoadingConfig(false);
     };
     loadConfig();
