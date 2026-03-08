@@ -75,11 +75,12 @@ const AppointmentsTab: React.FC = () => {
 
   const loadData = async () => {
     setLoading(true);
-    const [appts, cls, availSetting, slotSetting] = await Promise.all([
+    const [appts, cls, availSetting, slotSetting, waSetting] = await Promise.all([
       supabase.from("appointments").select("*").order("appointment_date", { ascending: true }),
       supabase.from("clients").select("id, full_name").order("full_name"),
       supabase.from("admin_settings" as any).select("value").eq("key", "availability").single(),
       supabase.from("admin_settings" as any).select("value").eq("key", "slot_duration").single(),
+      supabase.from("admin_settings" as any).select("value").eq("key", "admin_whatsapp").single(),
     ]);
 
     if (availSetting.data) {
@@ -87,6 +88,9 @@ const AppointmentsTab: React.FC = () => {
     }
     if (slotSetting.data) {
       try { setSlotDuration(Number((slotSetting.data as any).value) || 30); } catch {}
+    }
+    if (waSetting.data) {
+      try { setAdminWhatsApp((waSetting.data as any).value || ""); } catch {}
     }
 
     const clientMap = new Map<string, string>();
