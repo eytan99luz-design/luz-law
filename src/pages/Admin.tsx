@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Trash2, Save, MessageSquare, Star, HelpCircle, BarChart3, Eye, EyeOff, FileText, PenTool } from "lucide-react";
+import { LogOut, Plus, Trash2, Save, MessageSquare, Star, HelpCircle, BarChart3, Eye, EyeOff, FileText, PenTool, Users, Calendar, LayoutDashboard } from "lucide-react";
 import DocumentsTab from "@/components/admin/DocumentsTab";
+import ClientsTab from "@/components/admin/ClientsTab";
+import AppointmentsTab from "@/components/admin/AppointmentsTab";
+import DashboardTab from "@/components/admin/DashboardTab";
 import logoDark from "@/assets/logo-dark.jpg";
 
 type Testimonial = {
