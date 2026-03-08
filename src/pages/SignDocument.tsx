@@ -251,9 +251,9 @@ const SignDocument: React.FC = () => {
 
       setSigned(true);
       toast({ title: "המסמך נחתם בהצלחה!" });
-    } catch (err) {
-      console.error(err);
-      toast({ title: "שגיאה בשמירת המסמך", variant: "destructive" });
+    } catch (err: any) {
+      console.error("Sign document error:", err?.message || err);
+      toast({ title: "שגיאה בשמירת המסמך: " + (err?.message || "שגיאה לא ידועה"), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
