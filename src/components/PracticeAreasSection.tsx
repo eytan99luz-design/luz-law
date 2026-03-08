@@ -54,8 +54,7 @@ const PracticeAreasSection: React.FC = () => {
                   whileHover={{ y: -8, transition: { duration: 0.2 } }}
                   className="group"
                 >
-                  <div className="h-full rounded-lg border border-border bg-card p-6 transition-all duration-300 hover:border-primary/40 hover:shadow-gold relative overflow-hidden">
-                    {/* Subtle gold gradient on hover */}
+                  <div className="h-full rounded-lg glass p-6 transition-all duration-300 hover:border-primary/40 hover:shadow-gold relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-transparent transition-all duration-500" />
                     <div className="relative z-10">
                       <motion.div

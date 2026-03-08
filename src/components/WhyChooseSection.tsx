@@ -32,7 +32,6 @@ const WhyChooseSection: React.FC = () => {
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-12 max-w-6xl mx-auto items-center">
-            {/* Left reasons */}
             <div className="space-y-10">
               {t.whyMe.reasons.slice(0, 2).map((reason, index) => {
                 const Icon = iconMap[reason.icon] || Award;
@@ -59,7 +58,6 @@ const WhyChooseSection: React.FC = () => {
               })}
             </div>
 
-            {/* Center image */}
             <motion.div
               initial={{ opacity: 0, scale: 0.85 }}
               animate={isVisible ? { opacity: 1, scale: 1 } : {}}
@@ -71,14 +69,13 @@ const WhyChooseSection: React.FC = () => {
                   src={profileStanding}
                   alt="עו״ד איתן לוז"
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
               </div>
-              {/* Decorative frame */}
               <div className="absolute -inset-3 border border-primary/15 rounded-lg" />
             </motion.div>
 
-            {/* Right reasons */}
             <div className="space-y-10">
               {t.whyMe.reasons.slice(2, 4).map((reason, index) => {
                 const Icon = iconMap[reason.icon] || Award;
