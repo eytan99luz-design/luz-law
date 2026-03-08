@@ -152,6 +152,24 @@ const DocumentsTab: React.FC = () => {
     }
   };
 
+  const handleSendWhatsApp = () => {
+    if (!clientPhone.trim()) {
+      toast({ title: "נא להזין מספר טלפון", variant: "destructive" });
+      return;
+    }
+    const link = `${window.location.origin}/sign/${whatsappDialog.token}`;
+    const name = clientName.trim() || "לקוח/ה יקר/ה";
+    const message = `היי ${name}, מצורף ${whatsappDialog.docTitle} לחתימה:\n${link}\n\nבברכה,\nעו"ד איתן לוז`;
+    // Format phone: remove leading 0, add 972
+    let phone = clientPhone.trim().replace(/[^0-9]/g, "");
+    if (phone.startsWith("0")) phone = "972" + phone.slice(1);
+    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank");
+    setWhatsappDialog({ open: false, token: "", docTitle: "" });
+    setClientName("");
+    setClientPhone("");
+  };
+
   if (loading) return <p className="text-muted-foreground">טוען מסמכים...</p>;
 
   return (
