@@ -43,9 +43,7 @@ const Header: React.FC = () => {
       <div className="container mx-auto px-4 flex items-center justify-between h-18">
         {/* Logo */}
         <button onClick={() => scrollTo("#hero")} className="flex items-center gap-2 group">
-          <div className="h-12 px-2 py-1 bg-white/95 rounded-md shadow-sm">
-            <img src={logo} alt="לוגו עו״ד איתן לוז" className="h-full w-auto object-contain" />
-          </div>
+          <img src={logo} alt="לוגו עו״ד איתן לוז" className="h-12 w-auto object-contain rounded" />
         </button>
 
         {/* Desktop Nav */}
