@@ -95,6 +95,139 @@ export type Database = {
         }
         Relationships: []
       }
+      document_fields: {
+        Row: {
+          created_at: string
+          document_id: string
+          field_type: string
+          height: number
+          id: string
+          label: string
+          page_number: number
+          required: boolean
+          sort_order: number | null
+          width: number
+          x: number
+          y: number
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          field_type?: string
+          height?: number
+          id?: string
+          label: string
+          page_number?: number
+          required?: boolean
+          sort_order?: number | null
+          width?: number
+          x?: number
+          y?: number
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          field_type?: string
+          height?: number
+          id?: string
+          label?: string
+          page_number?: number
+          required?: boolean
+          sort_order?: number | null
+          width?: number
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_fields_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_submissions: {
+        Row: {
+          created_at: string
+          document_id: string
+          field_values: Json | null
+          id: string
+          signature_data: string | null
+          signed_at: string | null
+          signed_pdf_url: string | null
+          signer_email: string | null
+          signer_name: string | null
+          status: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          field_values?: Json | null
+          id?: string
+          signature_data?: string | null
+          signed_at?: string | null
+          signed_pdf_url?: string | null
+          signer_email?: string | null
+          signer_name?: string | null
+          status?: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          field_values?: Json | null
+          id?: string
+          signature_data?: string | null
+          signed_at?: string | null
+          signed_pdf_url?: string | null
+          signer_email?: string | null
+          signer_name?: string | null
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_submissions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          pdf_url: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pdf_url: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pdf_url?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       faqs: {
         Row: {
           answer_en: string
