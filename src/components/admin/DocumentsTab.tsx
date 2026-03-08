@@ -302,48 +302,79 @@ const DocumentsTab: React.FC = () => {
 
   // Counter-sign: admin adds signature to the already-signed PDF
   const handleCounterSign = async () => {
-    if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
-      toast({ title: "נא לחתום לפני השמירה", variant: "destructive" });
-      return;
+    let adminSigData: string;
+
+    if (signMode === "manual") {
+      if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
+        toast({ title: "נא לחתום לפני השמירה", variant: "destructive" });
+        return;
+      }
+      adminSigData = sigPadRef.current.toDataURL("image/png");
+    } else {
+      if (!presetSignatureUrl) {
+        toast({ title: "לא הוגדרה חתימה קבועה. העלה חתימה בעורך המסמך.", variant: "destructive" });
+        return;
+      }
+      // Fetch the preset image and convert to data URL
+      const resp = await fetch(presetSignatureUrl);
+      const blob = await resp.blob();
+      adminSigData = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
     }
+
     if (!counterSignDialog.sub?.signed_pdf_url) return;
 
     setCounterSigning(true);
     try {
-      const adminSigData = sigPadRef.current.toDataURL("image/png");
+      // Load admin_signature field positions for this document
+      const { data: adminFields } = await supabase
+        .from("document_fields")
+        .select("*")
+        .eq("document_id", counterSignDialog.documentId)
+        .eq("field_type", "admin_signature");
 
       // Load the client-signed PDF
       const pdfBytes = await fetch(counterSignDialog.sub.signed_pdf_url).then((r) => r.arrayBuffer());
       const pdfDocLib = await PDFDocument.load(pdfBytes);
       const pages = pdfDocLib.getPages();
-      const lastPage = pages[pages.length - 1];
-      const { width: pageWidth, height: pageHeight } = lastPage.getSize();
 
-      // Embed admin signature as PNG (transparent)
-      const sigImg = await pdfDocLib.embedPng(adminSigData);
-      const sigAspect = sigImg.width / sigImg.height;
-      const sigWidth = 150;
-      const sigHeight = sigWidth / sigAspect;
+      // Determine if it's PNG or JPEG from the data URL
+      const isPng = adminSigData.includes("image/png");
+      const sigImg = isPng
+        ? await pdfDocLib.embedPng(adminSigData)
+        : await pdfDocLib.embedJpg(adminSigData);
 
-      // Place admin signature at bottom-left area
-      lastPage.drawImage(sigImg, {
-        x: 50,
-        y: 50,
-        width: sigWidth,
-        height: sigHeight,
-      });
-
-      // Add label
-      pdfDocLib.registerFontkit(fontkit);
-      const fontBytes = await fetch("/fonts/NotoSansHebrew-Regular.ttf").then((r) => r.arrayBuffer());
-      const customFont = await pdfDocLib.embedFont(fontBytes);
-      lastPage.drawText('חתימת עו"ד:', {
-        x: 50,
-        y: 50 + sigHeight + 5,
-        size: 9,
-        font: customFont,
-        color: rgb(0.3, 0.3, 0.3),
-      });
+      if (adminFields && adminFields.length > 0) {
+        // Place signature at each admin_signature field position
+        for (const field of adminFields) {
+          const page = pages[field.page_number - 1];
+          if (!page) continue;
+          const { height: pageHeight } = page.getSize();
+          const pdfX = field.x / 1.5;
+          const pdfY = pageHeight - (field.y / 1.5) - (field.height / 1.5);
+          page.drawImage(sigImg, {
+            x: pdfX,
+            y: pdfY,
+            width: field.width / 1.5,
+            height: field.height / 1.5,
+          });
+        }
+      } else {
+        // Fallback: place at bottom-left of last page
+        const lastPage = pages[pages.length - 1];
+        const sigAspect = sigImg.width / sigImg.height;
+        const sigWidth = 150;
+        const sigHeight = sigWidth / sigAspect;
+        lastPage.drawImage(sigImg, {
+          x: 50,
+          y: 50,
+          width: sigWidth,
+          height: sigHeight,
+        });
+      }
 
       const finalPdfBytes = await pdfDocLib.save();
       const finalBlob = new Blob([finalPdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
