@@ -54,6 +54,7 @@ const BookAppointment: React.FC = () => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", description: "" });
+  const [cancelToken, setCancelToken] = useState<string | null>(null);
   const [availability, setAvailability] = useState<AvailabilityConfig>(DEFAULT_AVAILABILITY);
   const [slotDuration, setSlotDuration] = useState(30);
   const [adminPhone, setAdminPhone] = useState("");
