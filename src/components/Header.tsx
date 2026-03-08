@@ -1,0 +1,94 @@
+import React from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Globe, Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const Header: React.FC = () => {
+  const { t, language, toggleLanguage } = useLanguage();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = [
+    { label: t.nav.home, href: "#hero" },
+    { label: t.nav.about, href: "#about" },
+    { label: t.nav.practiceAreas, href: "#practice-areas" },
+    { label: t.nav.whyMe, href: "#why-me" },
+    { label: t.nav.contact, href: "#contact" },
+  ];
+
+  const scrollTo = (href: string) => {
+    setMobileOpen(false);
+    const el = document.querySelector(href);
+    el?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
+      <div className="container mx-auto px-4 flex items-center justify-between h-16">
+        {/* Logo */}
+        <button onClick={() => scrollTo("#hero")} className="text-lg font-bold text-primary">
+          {language === "he" ? "עו\"ד איתן לוז" : "Eitan Luz, Adv."}
+        </button>
+
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-6">
+          {navItems.map((item) => (
+            <button
+              key={item.href}
+              onClick={() => scrollTo(item.href)}
+              className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
+            >
+              {item.label}
+            </button>
+          ))}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleLanguage}
+            className="gap-1.5 text-muted-foreground hover:text-primary"
+          >
+            <Globe className="h-4 w-4" />
+            {language === "he" ? "EN" : "עב"}
+          </Button>
+        </nav>
+
+        {/* Mobile */}
+        <div className="flex md:hidden items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="text-muted-foreground">
+            <Globe className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-background/95 backdrop-blur-md border-b border-border"
+          >
+            <nav className="container mx-auto px-4 py-4 flex flex-col gap-3">
+              {navItems.map((item) => (
+                <button
+                  key={item.href}
+                  onClick={() => scrollTo(item.href)}
+                  className="text-sm text-muted-foreground hover:text-primary py-2 transition-colors"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+};
+
+export default Header;
