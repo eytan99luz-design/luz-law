@@ -240,6 +240,10 @@ const Admin: React.FC = () => {
               <FileText className="h-4 w-4 ml-1" />
               מאמרים
             </TabsTrigger>
+            <TabsTrigger value="documents" className="data-[state=active]:bg-primary/20">
+              <PenTool className="h-4 w-4 ml-1" />
+              מסמכים
+            </TabsTrigger>
           </TabsList>
 
           {/* Contact Submissions */}
