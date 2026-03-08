@@ -62,9 +62,10 @@ const BookAppointment: React.FC = () => {
   // Load availability config
   useEffect(() => {
     const loadConfig = async () => {
-      const [availRes, slotRes] = await Promise.all([
+      const [availRes, slotRes, phoneRes] = await Promise.all([
         supabase.from("admin_settings" as any).select("value").eq("key", "availability").single(),
         supabase.from("admin_settings" as any).select("value").eq("key", "slot_duration").single(),
+        supabase.from("admin_settings" as any).select("value").eq("key", "admin_whatsapp").single(),
       ]);
       if (availRes.data) {
         try { setAvailability(JSON.parse((availRes.data as any).value)); } catch {}
