@@ -98,9 +98,12 @@ const BookAppointment: React.FC = () => {
 
   const availableSlots = useMemo(() => {
     if (!selectedDate) return [];
+    const dayConfig = availability[selectedDate.getDay()];
+    if (!dayConfig?.enabled) return [];
+    const allSlots = generateTimeSlots(dayConfig.start, dayConfig.end, slotDuration);
     const now = new Date();
     const isToday = isSameDay(selectedDate, now);
-    return ALL_SLOTS.filter((slot) => {
+    return allSlots.filter((slot) => {
       if (bookedSlots.includes(slot)) return false;
       if (isToday) {
         const [h, m] = slot.split(":").map(Number);
@@ -110,10 +113,11 @@ const BookAppointment: React.FC = () => {
       }
       return true;
     });
-  }, [selectedDate, bookedSlots]);
+  }, [selectedDate, bookedSlots, availability, slotDuration]);
 
   const isWorkingDay = (date: Date) => {
-    return WORKING_DAYS.includes(date.getDay());
+    const dayConfig = availability[date.getDay()];
+    return dayConfig?.enabled ?? false;
   };
 
   const handleDateSelect = (date: Date | undefined) => {
