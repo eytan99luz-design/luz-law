@@ -4,7 +4,7 @@ import { Globe, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import logo from "@/assets/logo-light.png";
+import logo from "@/assets/logo.jpg";
 
 const Header: React.FC = () => {
   const { t, language, toggleLanguage } = useLanguage();
