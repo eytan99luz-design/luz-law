@@ -1,6 +1,7 @@
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Globe, Menu, X } from "lucide-react";
+import { Globe, Menu, X, CalendarDays } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +10,7 @@ import logo from "@/assets/logo-dark.jpg";
 
 const Header: React.FC = () => {
   const { t, language, toggleLanguage } = useLanguage();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -59,6 +61,14 @@ const Header: React.FC = () => {
               {item.label}
             </motion.button>
           ))}
+          <Button
+            size="sm"
+            onClick={() => navigate("/book")}
+            className="bg-gradient-gold text-primary-foreground gap-1.5"
+          >
+            <CalendarDays className="h-4 w-4" />
+            {language === "he" ? "קבע פגישה" : "Book"}
+          </Button>
           <ThemeToggle />
           <Button
             variant="ghost"
@@ -100,6 +110,14 @@ const Header: React.FC = () => {
                   {item.label}
                 </button>
               ))}
+              <Button
+                size="sm"
+                onClick={() => { setMobileOpen(false); navigate("/book"); }}
+                className="bg-gradient-gold text-primary-foreground gap-1.5 mt-2"
+              >
+                <CalendarDays className="h-4 w-4" />
+                {language === "he" ? "קבע פגישה" : "Book Appointment"}
+              </Button>
             </nav>
           </motion.div>
         )}

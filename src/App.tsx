@@ -10,6 +10,7 @@ import Admin from "./pages/Admin";
 import BlogPost from "./pages/BlogPost";
 import DocumentEditor from "./pages/DocumentEditor";
 import SignDocument from "./pages/SignDocument";
+import BookAppointment from "./pages/BookAppointment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/book" element={<BookAppointment />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/document/:id" element={<DocumentEditor />} />
