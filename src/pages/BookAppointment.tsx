@@ -167,7 +167,7 @@ const BookAppointment: React.FC = () => {
       const endTime = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 
       // Create appointment
-      const { error: apptError } = await supabase
+      const { data: apptData, error: apptError } = await supabase
         .from("appointments")
         .insert({
           client_id: clientData.id,
@@ -177,9 +177,12 @@ const BookAppointment: React.FC = () => {
           start_time: selectedTime,
           end_time: endTime,
           status: "scheduled",
-        });
+        })
+        .select("cancel_token")
+        .single();
 
       if (apptError) throw apptError;
+      if (apptData) setCancelToken((apptData as any).cancel_token);
 
       setStep("done");
 
