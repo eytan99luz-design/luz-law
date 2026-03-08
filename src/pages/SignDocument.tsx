@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, FileText, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import SignaturePad from "signature_pad";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
