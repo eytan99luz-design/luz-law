@@ -56,10 +56,10 @@ const CancelAppointment: React.FC = () => {
   const handleCancel = async () => {
     if (!appointment) return;
     setCancelling(true);
-    const { error: err } = await supabase
-      .from("appointments")
-      .update({ status: "cancelled" } as any)
-      .eq("cancel_token" as any, token!)
+    const { error: err } = await (supabase
+      .from("appointments") as any)
+      .update({ status: "cancelled" })
+      .eq("cancel_token", token!)
       .eq("status", "scheduled");
 
     if (err) {
