@@ -163,8 +163,8 @@ const DocumentsTab: React.FC = () => {
     // Format phone: remove leading 0, add 972
     let phone = clientPhone.trim().replace(/[^0-9]/g, "");
     if (phone.startsWith("0")) phone = "972" + phone.slice(1);
-    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(waUrl, "_blank");
+    const waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
     setWhatsappDialog({ open: false, token: "", docTitle: "" });
     setClientName("");
     setClientPhone("");
