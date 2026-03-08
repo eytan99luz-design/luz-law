@@ -1,7 +1,7 @@
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Phone, Mail, MapPin } from "lucide-react";
-import logo from "@/assets/logo.jpg";
+import logo from "@/assets/logo-dark.jpg";
 
 const Footer: React.FC = () => {
   const { t, language } = useLanguage();
@@ -13,9 +13,7 @@ const Footer: React.FC = () => {
         <div className="grid md:grid-cols-3 gap-8 mb-8">
           {/* Brand */}
           <div className="flex flex-col items-center md:items-start gap-3">
-            <div className="h-14 px-3 py-1.5 bg-white/95 rounded-md shadow-sm inline-block">
-              <img src={logo} alt="לוגו עו״ד איתן לוז" className="h-full w-auto object-contain" />
-            </div>
+            <img src={logo} alt="לוגו עו״ד איתן לוז" className="h-16 w-auto object-contain rounded" />
             <p className="text-muted-foreground text-sm leading-relaxed text-center md:text-start">
               {language === "he"
                 ? "מומחיות בדין אזרחי וייעוץ משפטי לתאגידים ועמותות"
