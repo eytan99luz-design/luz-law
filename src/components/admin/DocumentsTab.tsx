@@ -22,8 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SignaturePad from "signature_pad";
-import { PDFDocument, rgb } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument } from "pdf-lib";
 
 type Client = {
   id: string;
