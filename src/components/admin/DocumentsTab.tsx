@@ -139,14 +139,8 @@ const DocumentsTab: React.FC = () => {
     loadClients();
   }, []);
 
-  // Init signature pad when counter-sign dialog opens
+  // Clean up signature pad when counter-sign dialog closes
   useEffect(() => {
-    if (counterSignDialog.open && sigCanvasRef.current && !sigPadRef.current) {
-      sigPadRef.current = new SignaturePad(sigCanvasRef.current, {
-        backgroundColor: "rgba(0, 0, 0, 0)",
-        penColor: "rgb(0, 0, 0)",
-      });
-    }
     if (!counterSignDialog.open) {
       sigPadRef.current = null;
     }
