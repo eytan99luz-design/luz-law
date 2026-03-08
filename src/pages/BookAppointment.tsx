@@ -191,6 +191,14 @@ const BookAppointment: React.FC = () => {
   const minDate = startOfDay(new Date());
   const maxDate = addDays(minDate, 60);
 
+  if (loadingConfig) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (step === "done") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4" dir={isHe ? "rtl" : "ltr"}>
