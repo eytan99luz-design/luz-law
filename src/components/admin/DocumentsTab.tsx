@@ -72,7 +72,8 @@ const DocumentsTab: React.FC = () => {
     }
 
     setUploading(true);
-    const fileName = `${Date.now()}_${selectedFile.name}`;
+    const fileExt = selectedFile.name.split('.').pop() || 'pdf';
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("documents")
       .upload(fileName, selectedFile, { contentType: "application/pdf" });
