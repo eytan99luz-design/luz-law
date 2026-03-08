@@ -580,7 +580,7 @@ const DocumentsTab: React.FC = () => {
                                 size="sm"
                                 variant="outline"
                                 className="text-primary border-primary/30"
-                                onClick={() => setCounterSignDialog({ open: true, sub, docTitle: doc.title })}
+                                onClick={() => setCounterSignDialog({ open: true, sub, docTitle: doc.title, documentId: doc.id })}
                               >
                                 <PenLine className="h-3 w-3 ml-1" />
                                 חתימת עו"ד
