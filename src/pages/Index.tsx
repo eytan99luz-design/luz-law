@@ -2,9 +2,13 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import AboutSection from "@/components/AboutSection";
 import PracticeAreasSection from "@/components/PracticeAreasSection";
+import StatsSection from "@/components/StatsSection";
 import WhyChooseSection from "@/components/WhyChooseSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
+import FAQSection from "@/components/FAQSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import bgPortrait from "@/assets/bg-portrait.jpg";
 
 const Index = () => {
@@ -28,12 +32,16 @@ const Index = () => {
         <main>
           <HeroSection />
           <AboutSection />
+          <StatsSection />
           <PracticeAreasSection />
           <WhyChooseSection />
+          <TestimonialsSection />
+          <FAQSection />
           <ContactSection />
         </main>
         <Footer />
       </div>
+      <WhatsAppButton />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Mail, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const ContactSection: React.FC = () => {
   const { t } = useLanguage();
@@ -18,13 +19,20 @@ const ContactSection: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    // For now, just show success — will be connected to Edge Function later
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.from("contact_submissions").insert({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || null,
+        message: form.message.trim(),
+      });
+      if (error) throw error;
       toast({ title: t.contact.success });
       setForm({ name: "", email: "", phone: "", message: "" });
-      setLoading(false);
-    }, 1000);
+    } catch {
+      toast({ title: t.contact.error, variant: "destructive" });
+    }
+    setLoading(false);
   };
 
   const contactInfo = [
