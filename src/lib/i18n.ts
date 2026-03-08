@@ -20,7 +20,7 @@ export const translations = {
     about: {
       title: "אודות",
       p1: "עו\"ד איתן לוז מתמחה בתחום הדין האזרחי ומעניק ייעוץ משפטי מקיף לתאגידים, עמותות, חברות ויחידים. עם ניסיון רב שנים בתחום, המשרד מספק מענה מקצועי ואישי לכל לקוח.",
-      p2: "המשרד פועל מתוך אמונה בשירות אישי, מקצועי ואמין. אנו מלווים את לקוחותינו בכל שלב, תוך מתן מענה מהיר ויעיל לכל צורך משפטי.",
+      p2: "עו\"ד לוז משמש כיועץ המשפטי ומייסד עמותת לב אביתר, ומביא עמו ניסיון עשיר בליווי משפטי של מגזר שלישי, עמותות ומלכ\"רים. המשרד פועל מתוך אמונה בשירות אישי, מקצועי ואמין.",
       p3: "הגישה שלנו משלבת מקצועיות ללא פשרות עם יחס אנושי וחם, כדי להבטיח את התוצאה הטובה ביותר עבורכם.",
     },
     practiceAreas: {
@@ -124,7 +124,7 @@ export const translations = {
     about: {
       title: "About",
       p1: "Adv. Eitan Luz specializes in civil law and provides comprehensive legal counsel to corporations, NGOs, companies, and individuals. With years of experience in the field, the firm delivers professional and personalized service to every client.",
-      p2: "The firm operates with a belief in personal, professional, and reliable service. We accompany our clients at every stage, providing quick and efficient solutions for every legal need.",
+      p2: "Adv. Luz serves as the legal counsel and founder of the Lev Avitar Association, bringing extensive experience in legal support for the third sector, NGOs, and non-profit organizations. The firm operates with a belief in personal, professional, and reliable service.",
       p3: "Our approach combines uncompromising professionalism with a warm, human touch to ensure the best outcome for you.",
     },
     practiceAreas: {
