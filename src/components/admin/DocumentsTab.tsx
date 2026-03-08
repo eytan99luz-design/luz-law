@@ -65,9 +65,8 @@ const DocumentsTab: React.FC = () => {
     loadDocuments();
   }, []);
 
-  const handleUploadPDF = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !newTitle.trim()) {
+  const handleUploadPDF = async () => {
+    if (!selectedFile || !newTitle.trim()) {
       toast({ title: "נא למלא כותרת ולבחור קובץ", variant: "destructive" });
       return;
     }
