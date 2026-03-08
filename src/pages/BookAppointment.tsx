@@ -54,6 +54,7 @@ const BookAppointment: React.FC = () => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", description: "" });
+  const [cancelToken, setCancelToken] = useState<string | null>(null);
   const [availability, setAvailability] = useState<AvailabilityConfig>(DEFAULT_AVAILABILITY);
   const [slotDuration, setSlotDuration] = useState(30);
   const [adminPhone, setAdminPhone] = useState("");
@@ -166,7 +167,7 @@ const BookAppointment: React.FC = () => {
       const endTime = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 
       // Create appointment
-      const { error: apptError } = await supabase
+      const { data: apptData, error: apptError } = await supabase
         .from("appointments")
         .insert({
           client_id: clientData.id,
@@ -176,9 +177,12 @@ const BookAppointment: React.FC = () => {
           start_time: selectedTime,
           end_time: endTime,
           status: "scheduled",
-        });
+        })
+        .select("cancel_token")
+        .single();
 
       if (apptError) throw apptError;
+      if (apptData) setCancelToken((apptData as any).cancel_token);
 
       setStep("done");
 
@@ -235,6 +239,19 @@ const BookAppointment: React.FC = () => {
           <p className="text-muted-foreground">
             {isHe ? "ניצור איתך קשר לאישור הפגישה. תודה!" : "We'll contact you to confirm. Thank you!"}
           </p>
+          {cancelToken && (
+            <div className="bg-muted/50 border border-border rounded-xl p-4 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                {isHe ? "צריך לבטל? השתמש בקישור הזה:" : "Need to cancel? Use this link:"}
+              </p>
+              <a
+                href={`${window.location.origin}/cancel-appointment/${cancelToken}`}
+                className="text-sm text-primary underline break-all"
+              >
+                {`${window.location.origin}/cancel-appointment/${cancelToken}`}
+              </a>
+            </div>
+          )}
           <Button variant="outline" onClick={() => navigate("/")}>
             <ArrowRight className="h-4 w-4 ml-1" />
             {isHe ? "חזרה לאתר" : "Back to site"}

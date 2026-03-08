@@ -41,6 +41,7 @@ export type Database = {
       appointments: {
         Row: {
           appointment_date: string
+          cancel_token: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
@@ -55,6 +56,7 @@ export type Database = {
         }
         Insert: {
           appointment_date: string
+          cancel_token?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -69,6 +71,7 @@ export type Database = {
         }
         Update: {
           appointment_date?: string
+          cancel_token?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null

@@ -11,6 +11,7 @@ import BlogPost from "./pages/BlogPost";
 import DocumentEditor from "./pages/DocumentEditor";
 import SignDocument from "./pages/SignDocument";
 import BookAppointment from "./pages/BookAppointment";
+import CancelAppointment from "./pages/CancelAppointment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/document/:id" element={<DocumentEditor />} />
             <Route path="/sign/:token" element={<SignDocument />} />
+            <Route path="/cancel-appointment/:token" element={<CancelAppointment />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
