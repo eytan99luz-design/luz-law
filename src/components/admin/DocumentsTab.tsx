@@ -4,9 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, FileText, Link2, Copy, Eye, Upload } from "lucide-react";
+import { Plus, Trash2, FileText, Link2, Copy, Eye, Upload, MessageCircle, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type Document = {
   id: string;
@@ -36,6 +43,13 @@ const DocumentsTab: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [whatsappDialog, setWhatsappDialog] = useState<{
+    open: boolean;
+    token: string;
+    docTitle: string;
+  }>({ open: false, token: "", docTitle: "" });
+  const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
 
   const loadDocuments = async () => {
     setLoading(true);
@@ -136,6 +150,24 @@ const DocumentsTab: React.FC = () => {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  const handleSendWhatsApp = () => {
+    if (!clientPhone.trim()) {
+      toast({ title: "נא להזין מספר טלפון", variant: "destructive" });
+      return;
+    }
+    const link = `${window.location.origin}/sign/${whatsappDialog.token}`;
+    const name = clientName.trim() || "לקוח/ה יקר/ה";
+    const message = `היי ${name}, מצורף ${whatsappDialog.docTitle} לחתימה:\n${link}\n\nבברכה,\nעו"ד איתן לוז`;
+    // Format phone: remove leading 0, add 972
+    let phone = clientPhone.trim().replace(/[^0-9]/g, "");
+    if (phone.startsWith("0")) phone = "972" + phone.slice(1);
+    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, "_blank");
+    setWhatsappDialog({ open: false, token: "", docTitle: "" });
+    setClientName("");
+    setClientPhone("");
   };
 
   if (loading) return <p className="text-muted-foreground">טוען מסמכים...</p>;
@@ -246,6 +278,20 @@ const DocumentsTab: React.FC = () => {
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
+                          {sub.status === "pending" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-green-600"
+                              onClick={() => {
+                                setWhatsappDialog({ open: true, token: sub.token, docTitle: doc.title });
+                                setClientName("");
+                                setClientPhone("");
+                              }}
+                            >
+                              <MessageCircle className="h-3 w-3" />
+                            </Button>
+                          )}
                           {sub.signed_pdf_url && (
                             <Button
                               size="sm"
@@ -282,6 +328,46 @@ const DocumentsTab: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* WhatsApp Dialog */}
+      <Dialog open={whatsappDialog.open} onOpenChange={(open) => setWhatsappDialog((prev) => ({ ...prev, open }))}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>שליחת קישור חתימה בוואטסאפ</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>שם הלקוח</Label>
+              <Input
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="לדוגמה: ישראל ישראלי"
+              />
+            </div>
+            <div>
+              <Label>מספר טלפון <span className="text-destructive">*</span></Label>
+              <Input
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                placeholder="050-1234567"
+                dir="ltr"
+              />
+            </div>
+            <div className="bg-muted/50 rounded p-3 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">תצוגה מקדימה:</p>
+              <p className="whitespace-pre-line">
+                {`היי ${clientName.trim() || "לקוח/ה יקר/ה"}, מצורף ${whatsappDialog.docTitle} לחתימה:\n[קישור לחתימה]\n\nבברכה,\nעו"ד איתן לוז`}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSendWhatsApp} className="bg-green-600 hover:bg-green-700 text-white gap-2">
+              <Send className="h-4 w-4" />
+              שלח בוואטסאפ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
