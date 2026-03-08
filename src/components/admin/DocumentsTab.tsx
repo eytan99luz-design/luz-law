@@ -754,27 +754,60 @@ const DocumentsTab: React.FC = () => {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              חתום על המסמך כדי ליצור קובץ סופי עם שתי החתימות
+              בחר אופן חתימה וצור קובץ סופי עם שתי החתימות
             </p>
-            <div>
-              <Label>החתימה שלך</Label>
-              <canvas
-                ref={sigCanvasCallback}
-                width={450}
-                height={180}
-                className="border border-border rounded w-full"
-                style={{ background: "repeating-conic-gradient(hsl(var(--muted)) 0% 25%, hsl(var(--background)) 0% 50%) 50% / 16px 16px" }}
-              />
-            </div>
+
+            {/* Mode selector */}
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="outline"
-                onClick={() => sigPadRef.current?.clear()}
+                variant={signMode === "preset" ? "default" : "outline"}
+                onClick={() => setSignMode("preset")}
               >
-                נקה חתימה
+                חתימה קבועה
+              </Button>
+              <Button
+                size="sm"
+                variant={signMode === "manual" ? "default" : "outline"}
+                onClick={() => setSignMode("manual")}
+              >
+                חתימה ידנית
               </Button>
             </div>
+
+            {signMode === "preset" ? (
+              <div className="space-y-2">
+                <Label>חתימה/חותמת קבועה</Label>
+                {presetSignatureUrl ? (
+                  <div className="border border-border rounded p-3"
+                    style={{ background: "repeating-conic-gradient(hsl(var(--muted)) 0% 25%, hsl(var(--background)) 0% 50%) 50% / 16px 16px" }}>
+                    <img src={presetSignatureUrl} alt="חתימה קבועה" className="max-h-24 mx-auto" />
+                  </div>
+                ) : (
+                  <div className="border border-dashed border-border rounded p-4 text-center text-sm text-muted-foreground">
+                    לא הוגדרה חתימה קבועה. היכנס לעורך המסמך כדי להעלות חתימה.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>חתום כאן</Label>
+                <canvas
+                  ref={sigCanvasCallback}
+                  width={450}
+                  height={180}
+                  className="border border-border rounded w-full"
+                  style={{ background: "repeating-conic-gradient(hsl(var(--muted)) 0% 25%, hsl(var(--background)) 0% 50%) 50% / 16px 16px" }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => sigPadRef.current?.clear()}
+                >
+                  נקה חתימה
+                </Button>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
