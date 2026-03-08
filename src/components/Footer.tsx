@@ -50,11 +50,14 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-border pt-6 text-center">
-          <p className="text-muted-foreground text-xs">
+          <a
+            href="/admin/login"
+            className="text-muted-foreground/30 text-xs hover:text-muted-foreground/60 transition-colors cursor-pointer"
+          >
             © {new Date().getFullYear()}{" "}
             {language === "he" ? "עו\"ד איתן לוז" : "Eitan Luz, Adv."}.{" "}
             {t.footer.rights}.
-          </p>
+          </a>
         </div>
       </div>
     </footer>
