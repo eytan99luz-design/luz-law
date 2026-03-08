@@ -69,6 +69,7 @@ const AppointmentsTab: React.FC = () => {
   const [viewMode, setViewMode] = useState<"upcoming" | "past" | "all">("upcoming");
   const [availability, setAvailability] = useState<AvailabilityConfig>(DEFAULT_AVAILABILITY);
   const [slotDuration, setSlotDuration] = useState(30);
+  const [adminWhatsApp, setAdminWhatsApp] = useState("");
   const [savingAvail, setSavingAvail] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
