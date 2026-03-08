@@ -69,16 +69,18 @@ const AppointmentsTab: React.FC = () => {
   const [viewMode, setViewMode] = useState<"upcoming" | "past" | "all">("upcoming");
   const [availability, setAvailability] = useState<AvailabilityConfig>(DEFAULT_AVAILABILITY);
   const [slotDuration, setSlotDuration] = useState(30);
+  const [adminWhatsApp, setAdminWhatsApp] = useState("");
   const [savingAvail, setSavingAvail] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
-    const [appts, cls, availSetting, slotSetting] = await Promise.all([
+    const [appts, cls, availSetting, slotSetting, waSetting] = await Promise.all([
       supabase.from("appointments").select("*").order("appointment_date", { ascending: true }),
       supabase.from("clients").select("id, full_name").order("full_name"),
       supabase.from("admin_settings" as any).select("value").eq("key", "availability").single(),
       supabase.from("admin_settings" as any).select("value").eq("key", "slot_duration").single(),
+      supabase.from("admin_settings" as any).select("value").eq("key", "admin_whatsapp").single(),
     ]);
 
     if (availSetting.data) {
@@ -86,6 +88,9 @@ const AppointmentsTab: React.FC = () => {
     }
     if (slotSetting.data) {
       try { setSlotDuration(Number((slotSetting.data as any).value) || 30); } catch {}
+    }
+    if (waSetting.data) {
+      try { setAdminWhatsApp((waSetting.data as any).value || ""); } catch {}
     }
 
     const clientMap = new Map<string, string>();
@@ -186,8 +191,9 @@ const AppointmentsTab: React.FC = () => {
       await Promise.all([
         upsert("availability", JSON.stringify(availability)),
         upsert("slot_duration", String(slotDuration)),
+        upsert("admin_whatsapp", adminWhatsApp.trim()),
       ]);
-      toast({ title: "שעות הפעילות נשמרו!" });
+      toast({ title: "ההגדרות נשמרו!" });
     } catch (err: any) {
       toast({ title: "שגיאה בשמירה", variant: "destructive" });
     } finally {
@@ -281,9 +287,19 @@ const AppointmentsTab: React.FC = () => {
               step={15}
             />
           </div>
+          <div className="flex items-center gap-3">
+            <Label className="min-w-fit">מספר וואטסאפ (לאישור פגישות):</Label>
+            <Input
+              value={adminWhatsApp}
+              onChange={(e) => setAdminWhatsApp(e.target.value)}
+              placeholder="972501234567"
+              className="w-48"
+              dir="ltr"
+            />
+          </div>
           <Button onClick={saveAvailability} disabled={savingAvail} className="bg-gradient-gold text-primary-foreground">
             <Save className="h-4 w-4 ml-1" />
-            {savingAvail ? "שומר..." : "שמור שעות פעילות"}
+            {savingAvail ? "שומר..." : "שמור הגדרות"}
           </Button>
         </div>
       )}
