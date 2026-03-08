@@ -33,10 +33,10 @@ const CancelAppointment: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       if (!token) { setError("invalid"); setLoading(false); return; }
-      const { data, error: err } = await supabase
-        .from("appointments")
+      const { data, error: err } = await (supabase
+        .from("appointments") as any)
         .select("id, title, appointment_date, start_time, status, cancel_token")
-        .eq("cancel_token" as any, token)
+        .eq("cancel_token", token)
         .single();
 
       if (err || !data) {
