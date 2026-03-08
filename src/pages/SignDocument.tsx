@@ -188,6 +188,7 @@ const SignDocument: React.FC = () => {
       // Generate signed PDF
       const pdfBytes = await fetch(doc.pdf_url).then((r) => r.arrayBuffer());
       const pdfDocLib = await PDFDocument.load(pdfBytes);
+      pdfDocLib.registerFontkit(fontkit);
       const pages = pdfDocLib.getPages();
 
       // Embed a Unicode font for Hebrew support
