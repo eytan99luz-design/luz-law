@@ -157,18 +157,22 @@ const DocumentsTab: React.FC = () => {
           </div>
           <div>
             <Label>קובץ PDF</Label>
-            <div className="flex gap-2">
-              <Input
-                type="file"
-                accept=".pdf"
-                onChange={handleUploadPDF}
-                disabled={uploading || !newTitle.trim()}
-                className="file:ml-2 file:bg-primary/10 file:text-primary file:border-0 file:rounded file:px-3 file:py-1 file:text-sm"
-              />
-            </div>
+            <Input
+              type="file"
+              accept=".pdf"
+              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+              className="file:ml-2 file:bg-primary/10 file:text-primary file:border-0 file:rounded file:px-3 file:py-1 file:text-sm"
+            />
           </div>
         </div>
-        {uploading && <p className="text-sm text-muted-foreground animate-pulse">מעלה...</p>}
+        <Button
+          onClick={handleUploadPDF}
+          disabled={uploading || !newTitle.trim() || !selectedFile}
+          className="bg-gradient-gold text-primary-foreground"
+        >
+          <Upload className="h-4 w-4 ml-1" />
+          {uploading ? "מעלה..." : "העלה מסמך"}
+        </Button>
       </div>
 
       {/* Documents list */}
