@@ -245,9 +245,12 @@ export type Database = {
       }
       document_submissions: {
         Row: {
+          admin_signature_data: string | null
+          admin_signed_at: string | null
           created_at: string
           document_id: string
           field_values: Json | null
+          final_pdf_url: string | null
           id: string
           signature_data: string | null
           signed_at: string | null
@@ -258,9 +261,12 @@ export type Database = {
           token: string
         }
         Insert: {
+          admin_signature_data?: string | null
+          admin_signed_at?: string | null
           created_at?: string
           document_id: string
           field_values?: Json | null
+          final_pdf_url?: string | null
           id?: string
           signature_data?: string | null
           signed_at?: string | null
@@ -271,9 +277,12 @@ export type Database = {
           token?: string
         }
         Update: {
+          admin_signature_data?: string | null
+          admin_signed_at?: string | null
           created_at?: string
           document_id?: string
           field_values?: Json | null
+          final_pdf_url?: string | null
           id?: string
           signature_data?: string | null
           signed_at?: string | null

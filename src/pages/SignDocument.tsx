@@ -138,7 +138,7 @@ const SignDocument: React.FC = () => {
   useEffect(() => {
     if (showSigPad && sigCanvasRef.current && !sigPadRef.current) {
       sigPadRef.current = new SignaturePad(sigCanvasRef.current, {
-        backgroundColor: "rgb(255, 255, 255)",
+        backgroundColor: "rgba(0, 0, 0, 0)",
         penColor: "rgb(0, 0, 0)",
       });
     }
@@ -368,7 +368,8 @@ const SignDocument: React.FC = () => {
                   ref={sigCanvasRef}
                   width={400}
                   height={150}
-                  className="border border-border rounded bg-white w-full max-w-md"
+                  className="border border-border rounded w-full max-w-md"
+                  style={{ background: "repeating-conic-gradient(#f0f0f0 0% 25%, #fff 0% 50%) 50% / 16px 16px" }}
                 />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleSaveSignature} className="bg-gradient-gold text-primary-foreground">
