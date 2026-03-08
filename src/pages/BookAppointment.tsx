@@ -190,6 +190,7 @@ const BookAppointment: React.FC = () => {
           : `Hi, I booked a consultation:\n📅 Date: ${dateFormatted}\n🕐 Time: ${selectedTime}\n👤 Name: ${form.name.trim()}\n📞 Phone: ${form.phone.trim()}${form.description.trim() ? `\n📋 Subject: ${form.description.trim()}` : ""}`;
         const waUrl = `https://wa.me/${adminPhone}?text=${encodeURIComponent(msg)}`;
         window.open(waUrl, "_blank");
+      }
     } catch (err: any) {
       console.error("Booking error:", err);
       toast({
