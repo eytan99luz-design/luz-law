@@ -359,7 +359,7 @@ const DocumentsTab: React.FC = () => {
       if (updateError) throw updateError;
 
       toast({ title: "החתימה נוספה בהצלחה!" });
-      setCounterSignDialog({ open: false, sub: null, docTitle: "" });
+      setCounterSignDialog({ open: false, sub: null, docTitle: "", documentId: "" });
       loadDocuments();
     } catch (err: any) {
       console.error("Counter-sign error:", err);
