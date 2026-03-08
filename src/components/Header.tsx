@@ -61,6 +61,14 @@ const Header: React.FC = () => {
               {item.label}
             </motion.button>
           ))}
+          <Button
+            size="sm"
+            onClick={() => navigate("/book")}
+            className="bg-gradient-gold text-primary-foreground gap-1.5"
+          >
+            <CalendarDays className="h-4 w-4" />
+            {language === "he" ? "קבע פגישה" : "Book"}
+          </Button>
           <ThemeToggle />
           <Button
             variant="ghost"
