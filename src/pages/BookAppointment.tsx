@@ -176,6 +176,15 @@ const BookAppointment: React.FC = () => {
       if (apptError) throw apptError;
 
       setStep("done");
+
+      // Open WhatsApp with confirmation message for admin
+      const adminPhone = "972501234567"; // TODO: replace with your actual number
+      const dateFormatted = format(selectedDate, "dd/MM/yyyy");
+      const msg = isHe
+        ? `שלום, קבעתי פגישת ייעוץ:\n📅 תאריך: ${dateFormatted}\n🕐 שעה: ${selectedTime}\n👤 שם: ${form.name.trim()}\n📞 טלפון: ${form.phone.trim()}${form.description.trim() ? `\n📋 נושא: ${form.description.trim()}` : ""}`
+        : `Hi, I booked a consultation:\n📅 Date: ${dateFormatted}\n🕐 Time: ${selectedTime}\n👤 Name: ${form.name.trim()}\n📞 Phone: ${form.phone.trim()}${form.description.trim() ? `\n📋 Subject: ${form.description.trim()}` : ""}`;
+      const waUrl = `https://wa.me/${adminPhone}?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, "_blank");
     } catch (err: any) {
       console.error("Booking error:", err);
       toast({
