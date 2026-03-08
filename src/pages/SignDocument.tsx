@@ -187,8 +187,18 @@ const SignDocument: React.FC = () => {
       // Generate signed PDF
       const pdfBytes = await fetch(doc.pdf_url).then((r) => r.arrayBuffer());
       const pdfDocLib = await PDFDocument.load(pdfBytes);
-      const helvetica = await pdfDocLib.embedFont(StandardFonts.Helvetica);
       const pages = pdfDocLib.getPages();
+
+      // Embed a Unicode font for Hebrew support
+      const fontUrl = "https://cdn.jsdelivr.net/gh/nicholasgasior/gfonts-noto-sans-hebrew/NotoSansHebrew-Regular.ttf";
+      let customFont: any;
+      try {
+        const fontBytes = await fetch(fontUrl).then((r) => r.arrayBuffer());
+        customFont = await pdfDocLib.embedFont(fontBytes);
+      } catch {
+        // Fallback to Helvetica for Latin-only text
+        customFont = await pdfDocLib.embedFont(StandardFonts.Helvetica);
+      }
 
       // Write field values onto PDF
       for (const field of fields) {
@@ -215,7 +225,7 @@ const SignDocument: React.FC = () => {
             x: pdfX,
             y: pdfY,
             size: 11,
-            font: helvetica,
+            font: customFont,
             color: rgb(0, 0, 0),
           });
         }
