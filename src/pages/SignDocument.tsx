@@ -222,7 +222,7 @@ const SignDocument: React.FC = () => {
       }
 
       const signedPdfBytes = await pdfDocLib.save();
-      const signedBlob = new Blob([signedPdfBytes], { type: "application/pdf" });
+      const signedBlob = new Blob([signedPdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
       const fileName = `signed_${submission.id}_${Date.now()}.pdf`;
 
       const { error: uploadError } = await supabase.storage
