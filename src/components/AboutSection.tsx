@@ -11,7 +11,6 @@ const AboutSection: React.FC = () => {
 
   return (
     <section id="about" className="py-24 relative overflow-hidden">
-      {/* Background subtle pattern */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
 
       <div className="container mx-auto px-4">
@@ -29,7 +28,6 @@ const AboutSection: React.FC = () => {
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Images layout */}
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               animate={isVisible ? { opacity: 1, x: 0 } : {}}
@@ -37,7 +35,6 @@ const AboutSection: React.FC = () => {
               className="relative"
             >
               <div className="relative">
-                {/* Main image */}
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.3 }}
@@ -47,13 +44,12 @@ const AboutSection: React.FC = () => {
                     src={profileHero}
                     alt="עו״ד איתן לוז במשרד"
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
-                  {/* Gold corner accents */}
                   <div className="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-primary/50 rounded-tl-lg" />
                   <div className="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-primary/50 rounded-br-lg" />
                 </motion.div>
 
-                {/* Secondary image - floating */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={isVisible ? { opacity: 1, scale: 1 } : {}}
@@ -65,15 +61,14 @@ const AboutSection: React.FC = () => {
                     src={profileConsult}
                     alt="עו״ד איתן לוז בפגישת ייעוץ"
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </motion.div>
 
-                {/* Decorative gold box */}
                 <div className="absolute -top-4 -left-4 w-full h-full border border-primary/20 rounded-lg -z-10" />
               </div>
             </motion.div>
 
-            {/* Text */}
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={isVisible ? { opacity: 1, x: 0 } : {}}
