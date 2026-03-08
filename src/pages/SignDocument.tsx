@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, FileText, Loader2 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import SignaturePad from "signature_pad";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -187,6 +188,7 @@ const SignDocument: React.FC = () => {
       // Generate signed PDF
       const pdfBytes = await fetch(doc.pdf_url).then((r) => r.arrayBuffer());
       const pdfDocLib = await PDFDocument.load(pdfBytes);
+      pdfDocLib.registerFontkit(fontkit);
       const pages = pdfDocLib.getPages();
 
       // Embed a Unicode font for Hebrew support
