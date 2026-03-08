@@ -110,6 +110,14 @@ const Header: React.FC = () => {
                   {item.label}
                 </button>
               ))}
+              <Button
+                size="sm"
+                onClick={() => { setMobileOpen(false); navigate("/book"); }}
+                className="bg-gradient-gold text-primary-foreground gap-1.5 mt-2"
+              >
+                <CalendarDays className="h-4 w-4" />
+                {language === "he" ? "קבע פגישה" : "Book Appointment"}
+              </Button>
             </nav>
           </motion.div>
         )}
