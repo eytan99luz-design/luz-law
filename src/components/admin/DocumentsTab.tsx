@@ -35,6 +35,7 @@ const DocumentsTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const loadDocuments = async () => {
     setLoading(true);
@@ -64,18 +65,17 @@ const DocumentsTab: React.FC = () => {
     loadDocuments();
   }, []);
 
-  const handleUploadPDF = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !newTitle.trim()) {
+  const handleUploadPDF = async () => {
+    if (!selectedFile || !newTitle.trim()) {
       toast({ title: "נא למלא כותרת ולבחור קובץ", variant: "destructive" });
       return;
     }
 
     setUploading(true);
-    const fileName = `${Date.now()}_${file.name}`;
+    const fileName = `${Date.now()}_${selectedFile.name}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("documents")
-      .upload(fileName, file, { contentType: "application/pdf" });
+      .upload(fileName, selectedFile, { contentType: "application/pdf" });
 
     if (uploadError) {
       toast({ title: "שגיאה בהעלאת הקובץ", variant: "destructive" });
@@ -96,6 +96,7 @@ const DocumentsTab: React.FC = () => {
     } else {
       toast({ title: "המסמך הועלה בהצלחה" });
       setNewTitle("");
+      setSelectedFile(null);
     }
     setUploading(false);
     loadDocuments();
@@ -156,18 +157,22 @@ const DocumentsTab: React.FC = () => {
           </div>
           <div>
             <Label>קובץ PDF</Label>
-            <div className="flex gap-2">
-              <Input
-                type="file"
-                accept=".pdf"
-                onChange={handleUploadPDF}
-                disabled={uploading || !newTitle.trim()}
-                className="file:ml-2 file:bg-primary/10 file:text-primary file:border-0 file:rounded file:px-3 file:py-1 file:text-sm"
-              />
-            </div>
+            <Input
+              type="file"
+              accept=".pdf"
+              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+              className="file:ml-2 file:bg-primary/10 file:text-primary file:border-0 file:rounded file:px-3 file:py-1 file:text-sm"
+            />
           </div>
         </div>
-        {uploading && <p className="text-sm text-muted-foreground animate-pulse">מעלה...</p>}
+        <Button
+          onClick={handleUploadPDF}
+          disabled={uploading || !newTitle.trim() || !selectedFile}
+          className="bg-gradient-gold text-primary-foreground"
+        >
+          <Upload className="h-4 w-4 ml-1" />
+          {uploading ? "מעלה..." : "העלה מסמך"}
+        </Button>
       </div>
 
       {/* Documents list */}
