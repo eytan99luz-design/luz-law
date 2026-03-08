@@ -43,6 +43,13 @@ const DocumentsTab: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [whatsappDialog, setWhatsappDialog] = useState<{
+    open: boolean;
+    token: string;
+    docTitle: string;
+  }>({ open: false, token: "", docTitle: "" });
+  const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
 
   const loadDocuments = async () => {
     setLoading(true);
