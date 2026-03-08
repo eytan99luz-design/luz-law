@@ -1,20 +1,20 @@
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Phone, Mail, MapPin } from "lucide-react";
+import logo from "@/assets/logo.jpg";
 
 const Footer: React.FC = () => {
   const { t, language } = useLanguage();
 
   return (
-    <footer className="py-12 border-t border-border">
+    <footer className="py-12 border-t border-border relative">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-8 mb-8">
           {/* Brand */}
-          <div>
-            <h3 className="text-xl font-bold text-primary mb-3">
-              {language === "he" ? "עו\"ד איתן לוז" : "Eitan Luz, Adv."}
-            </h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">
+          <div className="flex flex-col items-center md:items-start gap-3">
+            <img src={logo} alt="לוגו עו״ד איתן לוז" className="h-16 w-auto object-contain" />
+            <p className="text-muted-foreground text-sm leading-relaxed text-center md:text-start">
               {language === "he"
                 ? "מומחיות בדין אזרחי וייעוץ משפטי לתאגידים ועמותות"
                 : "Expertise in Civil Law & Corporate Legal Counsel"}

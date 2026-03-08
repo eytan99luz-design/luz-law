@@ -26,6 +26,7 @@ const PracticeAreasSection: React.FC = () => {
 
   return (
     <section id="practice-areas" className="py-24 bg-secondary/30 relative">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
       <div className="container mx-auto px-4">
         <div ref={ref}>
           <motion.div
@@ -53,12 +54,19 @@ const PracticeAreasSection: React.FC = () => {
                   whileHover={{ y: -8, transition: { duration: 0.2 } }}
                   className="group"
                 >
-                  <div className="h-full rounded-lg border border-border bg-card p-6 transition-all duration-300 hover:border-primary/40 hover:shadow-gold">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                      <Icon className="h-6 w-6 text-primary" />
+                  <div className="h-full rounded-lg border border-border bg-card p-6 transition-all duration-300 hover:border-primary/40 hover:shadow-gold relative overflow-hidden">
+                    {/* Subtle gold gradient on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-transparent transition-all duration-500" />
+                    <div className="relative z-10">
+                      <motion.div
+                        whileHover={{ rotate: 10, scale: 1.1 }}
+                        className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors"
+                      >
+                        <Icon className="h-6 w-6 text-primary" />
+                      </motion.div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">{area.title}</h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{area.description}</p>
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">{area.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{area.description}</p>
                   </div>
                 </motion.div>
               );
