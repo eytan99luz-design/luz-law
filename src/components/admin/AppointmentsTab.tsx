@@ -168,21 +168,61 @@ const AppointmentsTab: React.FC = () => {
     }
   };
 
+  const saveAvailability = async () => {
+    setSavingAvail(true);
+    try {
+      const upsert = async (key: string, value: string) => {
+        const { data: existing } = await supabase
+          .from("admin_settings" as any)
+          .select("id")
+          .eq("key", key)
+          .single();
+        if (existing) {
+          await supabase.from("admin_settings" as any).update({ value, updated_at: new Date().toISOString() } as any).eq("key", key);
+        } else {
+          await supabase.from("admin_settings" as any).insert({ key, value } as any);
+        }
+      };
+      await Promise.all([
+        upsert("availability", JSON.stringify(availability)),
+        upsert("slot_duration", String(slotDuration)),
+      ]);
+      toast({ title: "שעות הפעילות נשמרו!" });
+    } catch (err: any) {
+      toast({ title: "שגיאה בשמירה", variant: "destructive" });
+    } finally {
+      setSavingAvail(false);
+    }
+  };
+
+  const updateDay = (day: number, updates: Partial<DayAvailability>) => {
+    setAvailability((prev) => ({ ...prev, [day]: { ...prev[day], ...updates } }));
+  };
+
   if (loading) return <p className="text-muted-foreground">טוען פגישות...</p>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-2xl font-bold text-foreground">יומן פגישות</h2>
-        <Button
-          onClick={() => {
-            setEditing({ status: "scheduled", appointment_date: today, start_time: "09:00", end_time: "10:00" });
-            setDialogOpen(true);
-          }}
-          className="bg-gradient-gold text-primary-foreground"
-        >
-          <Plus className="h-4 w-4 ml-1" />
-          פגישה חדשה
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowSettings(!showSettings)}
+            className="border-primary/30 text-primary"
+          >
+            <Settings className="h-4 w-4 ml-1" />
+            שעות פעילות
+          </Button>
+          <Button
+            onClick={() => {
+              setEditing({ status: "scheduled", appointment_date: today, start_time: "09:00", end_time: "10:00" });
+              setDialogOpen(true);
+            }}
+            className="bg-gradient-gold text-primary-foreground"
+          >
+            <Plus className="h-4 w-4 ml-1" />
+            פגישה חדשה
         </Button>
       </div>
 
