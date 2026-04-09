@@ -7,7 +7,6 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
-import BlogPost from "./pages/BlogPost";
 import DocumentEditor from "./pages/DocumentEditor";
 import SignDocument from "./pages/SignDocument";
 import BookAppointment from "./pages/BookAppointment";
@@ -25,7 +24,6 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/book" element={<BookAppointment />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<Admin />} />
