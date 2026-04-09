@@ -21,7 +21,7 @@ const App = () => (
       <LanguageProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter basename="/luz-law/">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/book" element={<BookAppointment />} />
