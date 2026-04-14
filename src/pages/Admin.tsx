@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Trash2, Save, MessageSquare, Star, HelpCircle, BarChart3, Eye, EyeOff, FileText, PenTool, Users, Calendar, LayoutDashboard } from "lucide-react";
+import { LogOut, Plus, Trash2, Save, MessageSquare, Star, HelpCircle, BarChart3, Eye, EyeOff, FileText, PenTool, Users, Calendar, LayoutDashboard, Settings } from "lucide-react";
 import DocumentsTab from "@/components/admin/DocumentsTab";
 import ClientsTab from "@/components/admin/ClientsTab";
 import AppointmentsTab from "@/components/admin/AppointmentsTab";
 import DashboardTab from "@/components/admin/DashboardTab";
+import ContentManagementTab from "@/components/admin/ContentManagementTab";
 import logoDark from "@/assets/logo-dark.jpg";
 
 type Testimonial = {
@@ -259,11 +260,20 @@ const Admin: React.FC = () => {
               <FileText className="h-4 w-4 ml-1" />
               מאמרים
             </TabsTrigger>
+            <TabsTrigger value="cms" className="data-[state=active]:bg-primary/20">
+              <Settings className="h-4 w-4 ml-1" />
+              ניהול תוכן
+            </TabsTrigger>
           </TabsList>
 
           {/* Dashboard */}
           <TabsContent value="dashboard">
             <DashboardTab />
+          </TabsContent>
+
+          {/* CMS */}
+          <TabsContent value="cms">
+            <ContentManagementTab />
           </TabsContent>
 
           {/* Clients */}

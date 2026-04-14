@@ -7,12 +7,15 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "@/components/ThemeToggle";
 import logo from "@/assets/logo-dark.jpg";
+import { usePublicContent } from "@/hooks/usePublicContent";
 
 const Header: React.FC = () => {
   const { t, language, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { getImage } = usePublicContent();
+  const headerLogo = getImage("images", "logo_dark", logo);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -42,7 +45,7 @@ const Header: React.FC = () => {
     >
       <div className="container mx-auto px-4 flex items-center justify-between h-18">
         <button onClick={() => scrollTo("#hero")} className="flex items-center gap-2 group">
-          <img src={logo} alt="לוגו עו״ד איתן לוז" className="h-12 w-auto object-contain rounded" />
+          <img src={headerLogo} alt="לוגו עו״ד איתן לוז" className="h-12 w-auto object-contain rounded" />
         </button>
 
         <nav className="hidden md:flex items-center gap-6">

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { Award, Users, Clock, Shield } from "lucide-react";
 import profileStanding from "@/assets/profile-standing.jpg";
+import { usePublicContent } from "@/hooks/usePublicContent";
 
 const iconMap: Record<string, React.FC<{ className?: string }>> = {
   Award,
@@ -13,8 +14,24 @@ const iconMap: Record<string, React.FC<{ className?: string }>> = {
 };
 
 const WhyChooseSection: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { ref, isVisible } = useScrollAnimation();
+  const { get, getImage } = usePublicContent();
+  const lang = language;
+  const sectionTitle = get("why_choose", "title", lang, t.whyMe.title);
+  const standingImg = getImage("images", "profile_standing", profileStanding);
+
+  // Override reasons from CMS if available
+  const reasons = t.whyMe.reasons.map((reason, idx) => {
+    const key = `reason_${idx + 1}`;
+    const titleOverride = get("why_choose", `${key}_title`, lang, "");
+    const descOverride = get("why_choose", `${key}_desc`, lang, "");
+    return {
+      ...reason,
+      title: titleOverride || reason.title,
+      description: descOverride || reason.description,
+    };
+  });
 
   return (
     <section id="why-me" className="py-24 relative overflow-hidden">
@@ -27,13 +44,13 @@ const WhyChooseSection: React.FC = () => {
             className="text-center mb-16"
           >
             <div className="w-12 h-0.5 bg-gradient-gold mx-auto mb-6" />
-            <h2 className="text-3xl md:text-4xl font-bold text-gradient-gold mb-4">{t.whyMe.title}</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gradient-gold mb-4">{sectionTitle}</h2>
             <div className="w-12 h-0.5 bg-gradient-gold mx-auto mt-6" />
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-12 max-w-6xl mx-auto items-center">
             <div className="space-y-10">
-              {t.whyMe.reasons.slice(0, 2).map((reason, index) => {
+              {reasons.slice(0, 2).map((reason, index) => {
                 const Icon = iconMap[reason.icon] || Award;
                 return (
                   <motion.div
@@ -66,7 +83,7 @@ const WhyChooseSection: React.FC = () => {
             >
               <div className="aspect-[3/4] rounded-lg overflow-hidden shadow-gold-lg relative">
                 <img
-                  src={profileStanding}
+                  src={standingImg}
                   alt="עו״ד איתן לוז"
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -77,7 +94,7 @@ const WhyChooseSection: React.FC = () => {
             </motion.div>
 
             <div className="space-y-10">
-              {t.whyMe.reasons.slice(2, 4).map((reason, index) => {
+              {reasons.slice(2, 4).map((reason, index) => {
                 const Icon = iconMap[reason.icon] || Award;
                 return (
                   <motion.div

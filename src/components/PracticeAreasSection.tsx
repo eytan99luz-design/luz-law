@@ -10,6 +10,7 @@ import {
   Scale,
   Handshake,
 } from "lucide-react";
+import { usePublicContent } from "@/hooks/usePublicContent";
 
 const iconMap: Record<string, React.FC<{ className?: string }>> = {
   FileText,
@@ -21,8 +22,25 @@ const iconMap: Record<string, React.FC<{ className?: string }>> = {
 };
 
 const PracticeAreasSection: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { ref, isVisible } = useScrollAnimation();
+  const { get } = usePublicContent();
+  const lang = language;
+  const sectionTitle = get("practice_areas", "title", lang, t.practiceAreas.title);
+
+  // Override areas from CMS if available
+  const areas = t.practiceAreas.areas.map((area, idx) => {
+    const key = `area_${idx + 1}`;
+    const titleOverride = get("practice_areas", `${key}_title`, lang, "");
+    const descOverride = get("practice_areas", `${key}_desc`, lang, "");
+    const iconOverride = get("practice_areas", `${key}_icon`, lang, "");
+    return {
+      ...area,
+      title: titleOverride || area.title,
+      description: descOverride || area.description,
+      icon: iconOverride || area.icon,
+    };
+  });
 
   return (
     <section id="practice-areas" className="py-24 bg-secondary/30 relative">
@@ -37,13 +55,13 @@ const PracticeAreasSection: React.FC = () => {
           >
             <div className="w-12 h-0.5 bg-gradient-gold mx-auto mb-6" />
             <h2 className="text-3xl md:text-4xl font-bold text-gradient-gold mb-4">
-              {t.practiceAreas.title}
+              {sectionTitle}
             </h2>
             <div className="w-12 h-0.5 bg-gradient-gold mx-auto mt-6" />
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {t.practiceAreas.areas.map((area, index) => {
+            {areas.map((area, index) => {
               const Icon = iconMap[area.icon] || FileText;
               return (
                 <motion.div
