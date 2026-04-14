@@ -8,13 +8,22 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Mail, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { usePublicContent } from "@/hooks/usePublicContent";
 
 const ContactSection: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { ref, isVisible } = useScrollAnimation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const { get } = usePublicContent();
+  const lang = language;
+
+  const contactTitle = get("contact", "title", lang, t.contact.title);
+  const contactSubtitle = get("contact", "subtitle", lang, t.contact.subtitle);
+  const contactAddress = get("contact", "address", lang, t.contact.address);
+  const contactPhone = get("contact", "phone", lang, t.contact.phoneNumber);
+  const contactEmail = get("contact", "email", lang, t.contact.emailAddress);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,9 +45,9 @@ const ContactSection: React.FC = () => {
   };
 
   const contactInfo = [
-    { icon: MapPin, text: t.contact.address },
-    { icon: Phone, text: t.contact.phoneNumber, href: "tel:054-9183429" },
-    { icon: Mail, text: t.contact.emailAddress, href: "mailto:eytanluz.law@gmail.com" },
+    { icon: MapPin, text: contactAddress },
+    { icon: Phone, text: contactPhone, href: `tel:${contactPhone}` },
+    { icon: Mail, text: contactEmail, href: `mailto:${contactEmail}` },
   ];
 
   return (
@@ -52,8 +61,8 @@ const ContactSection: React.FC = () => {
             className="text-center mb-16"
           >
             <div className="w-12 h-0.5 bg-gradient-gold mx-auto mb-6" />
-            <h2 className="text-3xl md:text-4xl font-bold text-gradient-gold mb-4">{t.contact.title}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{t.contact.subtitle}</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gradient-gold mb-4">{contactTitle}</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">{contactSubtitle}</p>
             <div className="w-12 h-0.5 bg-gradient-gold mx-auto mt-6" />
           </motion.div>
 

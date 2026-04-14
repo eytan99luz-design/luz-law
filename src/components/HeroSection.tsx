@@ -4,9 +4,19 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Phone, ChevronDown } from "lucide-react";
 import profileHeadshot from "@/assets/profile-headshot.jpg";
+import { usePublicContent } from "@/hooks/usePublicContent";
 
 const HeroSection: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { get, getImage } = usePublicContent();
+  const lang = language;
+
+  const title = get("hero", "title", lang, t.hero.title);
+  const subtitle = get("hero", "subtitle", lang, t.hero.subtitle);
+  const description = get("hero", "description", lang, t.hero.description);
+  const ctaText = get("hero", "cta_text", lang, t.hero.cta);
+  const phoneText = get("hero", "phone_text", lang, t.hero.phone);
+  const heroImage = getImage("images", "profile_headshot", profileHeadshot);
 
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -54,7 +64,7 @@ const HeroSection: React.FC = () => {
               {/* Photo */}
               <div className="absolute inset-2 rounded-full overflow-hidden shadow-gold-lg">
                 <img
-                  src={profileHeadshot}
+                  src={heroImage}
                   alt="עו״ד איתן לוז"
                   className="w-full h-full object-cover"
                 />
@@ -82,7 +92,7 @@ const HeroSection: React.FC = () => {
               transition={{ delay: 0.5 }}
               className="text-primary/80 tracking-[0.3em] uppercase text-sm mb-4"
             >
-              {t.hero.subtitle}
+              {subtitle}
             </motion.p>
 
             <motion.h1
@@ -91,7 +101,7 @@ const HeroSection: React.FC = () => {
               transition={{ delay: 0.6, duration: 0.7 }}
               className="text-5xl md:text-7xl font-bold mb-6 text-gradient-gold leading-tight"
             >
-              {t.hero.title}
+              {title}
             </motion.h1>
 
             <motion.p
@@ -100,7 +110,7 @@ const HeroSection: React.FC = () => {
               transition={{ delay: 0.8 }}
               className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed"
             >
-              {t.hero.description}
+              {description}
             </motion.p>
 
             <motion.div
@@ -114,7 +124,7 @@ const HeroSection: React.FC = () => {
                 className="bg-gradient-gold text-primary-foreground hover:opacity-90 transition-all shadow-gold-lg text-base px-8 hover:scale-105 duration-200"
                 onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
               >
-                {t.hero.cta}
+                {ctaText}
               </Button>
               <Button
                 size="lg"
@@ -124,7 +134,7 @@ const HeroSection: React.FC = () => {
               >
                 <a href="tel:054-9183429">
                   <Phone className="h-4 w-4" />
-                  {t.hero.phone}
+                  {phoneText}
                 </a>
               </Button>
             </motion.div>

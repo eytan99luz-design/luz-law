@@ -4,10 +4,20 @@ import { motion } from "framer-motion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import profileHero from "@/assets/profile-hero.jpg";
 import profileConsult from "@/assets/profile-consult.jpg";
+import { usePublicContent } from "@/hooks/usePublicContent";
 
 const AboutSection: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { ref, isVisible } = useScrollAnimation();
+  const { get, getImage } = usePublicContent();
+  const lang = language;
+
+  const aboutTitle = get("about", "title", lang, t.about.title);
+  const p1 = get("about", "paragraph_1", lang, t.about.p1);
+  const p2 = get("about", "paragraph_2", lang, t.about.p2);
+  const p3 = get("about", "paragraph_3", lang, t.about.p3);
+  const mainImg = getImage("images", "profile_hero", profileHero);
+  const secondImg = getImage("images", "profile_consult", profileConsult);
 
   return (
     <section id="about" className="py-24 relative overflow-hidden">
@@ -22,7 +32,7 @@ const AboutSection: React.FC = () => {
           >
             <div className="text-center mb-16">
               <div className="w-12 h-0.5 bg-gradient-gold mx-auto mb-6" />
-              <h2 className="text-3xl md:text-4xl font-bold text-gradient-gold mb-4">{t.about.title}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-gradient-gold mb-4">{aboutTitle}</h2>
               <div className="w-12 h-0.5 bg-gradient-gold mx-auto mt-6" />
             </div>
           </motion.div>
@@ -41,7 +51,7 @@ const AboutSection: React.FC = () => {
                   className="aspect-[4/5] rounded-lg overflow-hidden shadow-gold-lg relative z-10"
                 >
                   <img
-                    src={profileHero}
+                    src={mainImg}
                     alt="עו״ד איתן לוז במשרד"
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -58,7 +68,7 @@ const AboutSection: React.FC = () => {
                   className="absolute -bottom-6 -right-6 w-40 h-40 md:w-48 md:h-48 rounded-lg overflow-hidden shadow-xl border-2 border-background z-20"
                 >
                   <img
-                    src={profileConsult}
+                    src={secondImg}
                     alt="עו״ד איתן לוז בפגישת ייעוץ"
                     className="w-full h-full object-cover"
                     loading="lazy"
@@ -81,7 +91,7 @@ const AboutSection: React.FC = () => {
                 transition={{ delay: 0.4 }}
                 className="text-foreground/90 leading-relaxed text-lg"
               >
-                {t.about.p1}
+                {p1}
               </motion.p>
               <motion.p
                 initial={{ opacity: 0 }}
@@ -89,7 +99,7 @@ const AboutSection: React.FC = () => {
                 transition={{ delay: 0.5 }}
                 className="text-muted-foreground leading-relaxed"
               >
-                {t.about.p2}
+                {p2}
               </motion.p>
               <motion.p
                 initial={{ opacity: 0 }}
@@ -97,7 +107,7 @@ const AboutSection: React.FC = () => {
                 transition={{ delay: 0.6 }}
                 className="text-muted-foreground leading-relaxed"
               >
-                {t.about.p3}
+                {p3}
               </motion.p>
               <motion.div
                 initial={{ scaleX: 0 }}
